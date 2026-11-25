@@ -472,13 +472,22 @@ for any given email address).
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
-    "--editics-server-addr",
-    envvar="PARSEC_EDITICS_SERVER_ADDR",
+    "--editics-server-addrs",
+    envvar="PARSEC_EDITICS_SERVER_ADDRS",
     show_envvar=True,
-    metavar="URL",
-    type=ParsecAddr.from_url,
-    default=None,
-    help="URL to reach this server from the editics domain (typically used to serve the editics pages in an isolated iframe)",
+    metavar="URL1,URL2",
+    callback=lambda ctx, param, value: {ParsecAddr.from_url(x) for x in value.split(",") if x},
+    default="",
+    help="""Coma-separated list of URLs for all servers instances where editics (i.e. document collaborative edition) is enabled.
+
+    This is used for:
+    - In web app for serving the editics pages in an isolated iframe.
+    - Serving the editics API to host document collaborative edition sessions.
+    - Load balancing the document collaborative edition session across
+      the editics instances using a sharding algorithm.
+
+    If not set, editics support is disabled for this server instance.
+    """,
 )
 @click.option(
     "--template-dir",
@@ -580,6 +589,7 @@ for any given email address).
     show_envvar=True,
     callback=lambda ctx, param, value: value.split(","),
     default="TLSv1",
+    metavar="CIPHER1,CIPHER2",
     help="""
     TLS Cipher suite to use, in the format of an OpenSSL cipher list (but using `,` instead of `:` as separator)
 
@@ -666,7 +676,7 @@ async def run_cmd(
     validation_email_rate_limit: tuple[int, int],
     fake_account_password_algorithm_seed: SecretKey,
     server_addr: ParsecAddr,
-    editics_server_addr: ParsecAddr | None,
+    editics_server_addrs: set[ParsecAddr],
     template_dir: Path | None,
     email_host: str,
     email_port: int,
@@ -752,7 +762,7 @@ async def run_cmd(
             email_config=email_config,
             proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
-            editics_server_addr=editics_server_addr,
+            editics_server_addrs=editics_server_addrs,
             debug=debug,
             account_config=account_config,
             advisory_device_file_protection=advisory_device_file_protection,

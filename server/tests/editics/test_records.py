@@ -26,6 +26,7 @@ from tests.common import (
     CoolorgRpcClients,
     EditicsJSClient,
     EditicsJSRuntime,
+    patch_backend_config_for_editics,
     wksp1_alice_gives_role,
 )
 
@@ -451,6 +452,7 @@ async def _do_test_record(
                 if js_client is None:
                     js_client = js_clients[participant] = await clients_stack.enter_async_context(
                         editics_js_runtime.new_client(
+                            backend=backend,
                             who=per_participant_rpc_client[participant],
                             realm_id=coolorg.wksp1_id,
                             document_id=EDITICS_DOCUMENT_ID,
@@ -637,6 +639,7 @@ for _record_path in sorted(RECORDS_DIR.glob("*.md")):
     _test_name = f"test_{_record_path.stem}"
 
     def _make_test(record_path: Path, test_name: str):
+        @patch_backend_config_for_editics()
         async def _test(
             coolorg: CoolorgRpcClients,
             backend: Backend,
@@ -656,11 +659,14 @@ for _record_path in sorted(RECORDS_DIR.glob("*.md")):
     globals()[_test_name] = _make_test(_record_path, _test_name)
 
 
+@patch_backend_config_for_editics()
 async def test_untranslatable_events(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     editics_js_runtime: EditicsJSRuntime,
 ) -> None:
     async with editics_js_runtime.new_client(
+        backend=backend,
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,
@@ -737,11 +743,14 @@ async def test_untranslatable_events(
         assert result["error"].startswith("Malformed editics encrypted cursor additional info")
 
 
+@patch_backend_config_for_editics()
 async def test_auth_changes_backlog_is_cooked_in_order(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     editics_js_runtime: EditicsJSRuntime,
 ) -> None:
     async with editics_js_runtime.new_client(
+        backend=backend,
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,

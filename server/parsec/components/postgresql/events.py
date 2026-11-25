@@ -258,6 +258,7 @@ class PGEventsComponent(BaseEventsComponent):
             user_profile_outsider_allowed=organization_user_profile_outsider_allowed,
             active_users_limit=organization_active_users_limit,
             realm_minimum_archiving_period_before_deletion=organization_realm_minimum_archiving_period_before_deletion,
+            editics_server_urls=self._editics_server_urls,
         )
 
         return org_config, user_current_profile, user_realms

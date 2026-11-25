@@ -13,12 +13,14 @@ from parsec._parsec import (
     DeviceID,
     InvitationStatus,
     OrganizationID,
+    ParsecAddr,
     PKIEnrollmentID,
     RealmRole,
     UserID,
     VlobID,
     authenticated_cmds,
 )
+from parsec.config import BackendConfig
 from parsec.events import Event, EventPinged
 from tests.common import (
     AuthenticatedRpcClient,
@@ -27,6 +29,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
     RpcTransportError,
+    patch_backend_config,
 )
 
 
@@ -154,6 +157,7 @@ async def test_authenticated_events_listen_ok(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -171,10 +175,22 @@ async def test_authenticated_events_listen_ok(
         assert event == authenticated_cmds.latest.events_listen.RepOk(expected)
 
 
+def _patch_backend_config(
+    backend_config: BackendConfig,
+) -> BackendConfig:
+    backend_config.sse_keepalive = 42
+    backend_config.editics_server_addrs = {
+        ParsecAddr(hostname="editics0.parsec.cloud", port=None, use_ssl=True),
+        ParsecAddr(hostname="editics1.parsec.cloud", port=8080, use_ssl=False),
+        ParsecAddr(hostname="editics2.parsec.cloud", port=None, use_ssl=True),
+    }
+    return backend_config
+
+
+@patch_backend_config(_patch_backend_config)
 async def test_receive_server_config_as_first_event(
     minimalorg: MinimalorgRpcClients, backend: Backend
 ) -> None:
-    backend.config.sse_keepalive = 42
     await backend.organization.update(
         DateTime.now(),
         minimalorg.organization_id,
@@ -191,6 +207,12 @@ async def test_receive_server_config_as_first_event(
                 user_profile_outsider_allowed=False,
                 sse_keepalive_seconds=42,
                 realm_minimum_archiving_period_before_deletion=666,
+                editics_server_urls=[
+                    # Ordered list, `httpS` goes after `http:`
+                    "http://editics1.parsec.cloud:8080/",
+                    "https://editics0.parsec.cloud/",
+                    "https://editics2.parsec.cloud/",
+                ],
             )
         )
 
@@ -223,6 +245,7 @@ async def test_user_not_receive_event_before_listen(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -263,6 +286,7 @@ async def test_conn_closed_on_bad_outcome(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -308,6 +332,7 @@ async def test_self_vlob_events_skipped(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -357,6 +382,7 @@ async def test_self_certificate_events_provided(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -429,6 +455,7 @@ async def test_receive_event_of_newly_shared_realm(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -574,6 +601,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -600,6 +628,7 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 

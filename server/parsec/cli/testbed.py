@@ -967,7 +967,9 @@ async def test_new_account(request: Request) -> Response:
 
 @asynccontextmanager
 async def testbed_backend_factory(
-    server_addr: ParsecAddr, with_postgresql: str | None
+    server_addr: ParsecAddr,
+    editics_server_addrs: set[ParsecAddr],
+    with_postgresql: str | None,
 ) -> AsyncGenerator[TestbedBackend]:
     blockstore_config = (
         MockedBlockStoreConfig() if with_postgresql is None else PostgreSQLBlockStoreConfig()
@@ -988,6 +990,7 @@ async def testbed_backend_factory(
         sse_keepalive=30,
         proxy_trusted_addresses=None,
         server_addr=server_addr,
+        editics_server_addrs=editics_server_addrs,
         email_config=MockedEmailConfig(EmailAddress("no-reply@parsec.com")),
         blockstore_config=blockstore_config,
         administration_token="s3cr3t",
@@ -1052,6 +1055,13 @@ async def testbed_backend_factory(
     show_default="parsec3://localhost:$PORT?no_ssl=True",
 )
 @click.option(
+    "--editics-server-addrs",
+    envvar="PARSEC_EDITICS_SERVER_ADDRS",
+    metavar="URL1,URL2 | no",
+    help="Coma-separated list of URLs for all servers instances where editics is enabled (set to `no` to disable)",
+    show_default="parsec3://editics[012].localhost:$PORT?no_ssl=True",
+)
+@click.option(
     "--with-postgresql",
     envvar="PARSEC_WITH_POSTGRESQL",
     metavar="WITH_POSTGRESQL",
@@ -1081,6 +1091,7 @@ def testbed_cmd(
     host: str,
     port: int,
     server_addr: str | None,
+    editics_server_addrs: str | None,
     with_postgresql: str | None,
     stop_after_process: int | None,
     populate: tuple[str, ...],
@@ -1092,6 +1103,20 @@ def testbed_cmd(
     if server_addr is None:
         server_addr = f"parsec3://localhost:{port}?no_ssl=True"
     cooked_server_addr = ParsecAddr.from_url(server_addr)
+
+    match editics_server_addrs:
+        case None:  # Default
+            # 3 editics server URLs, all pointing to this very server instance
+            cooked_editics_server_addrs = {
+                ParsecAddr(hostname=f"editics{i}.localhost", port=port, use_ssl=False)
+                for i in range(3)
+            }
+        case "no":  # Disabled
+            cooked_editics_server_addrs = set()
+        case _:
+            cooked_editics_server_addrs = {
+                ParsecAddr.from_url(addr) for addr in editics_server_addrs.split(",")
+            }
 
     async def _run_testbed():
         # Task group must be enclosed by backend (and not the other way around !)
@@ -1113,7 +1138,9 @@ def testbed_cmd(
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
             async with testbed_backend_factory(
-                server_addr=cooked_server_addr, with_postgresql=with_postgresql
+                server_addr=cooked_server_addr,
+                editics_server_addrs=cooked_editics_server_addrs,
+                with_postgresql=with_postgresql,
             ) as testbed:
                 for template in populate:
                     try:
@@ -1128,7 +1155,7 @@ def testbed_cmd(
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
                 click.secho(
-                    f"export TESTBED_SERVER='parsec3://127.0.0.1:{port}?no_ssl=true'",
+                    f"export TESTBED_SERVER='parsec3://localhost:{port}?no_ssl=true'",
                     fg="magenta",
                 )
 

@@ -54,6 +54,7 @@ from tests.common import (
     CoolorgRpcClients,
     EditicsSessionClient,
     RpcTransportError,
+    patch_backend_config_for_editics,
     wksp1_alice_gives_role,
 )
 
@@ -100,6 +101,7 @@ def _save_changes_event(
         ),
     ),
 )
+@patch_backend_config_for_editics()
 async def test_unknown_event_fields_are_rejected(
     alice_editics: EditicsSessionClient, raw_event: bytes
 ) -> None:
@@ -114,6 +116,7 @@ async def test_unknown_event_fields_are_rejected(
     assert rep.json()["detail"] == {"detail": "Bad content type or invalid body"}
 
 
+@patch_backend_config_for_editics()
 async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
     participant_session_id_1 = "e562e5fd21794d2b8e485d527d28b900"
     participant_session_id_2 = "b146ee2c144c485e924f6082c4ee66bf"
@@ -170,6 +173,7 @@ async def test_deco_reco(alice_editics: EditicsSessionClient) -> None:
         assert rep.participantIndexUser == 2
 
 
+@patch_backend_config_for_editics()
 async def test_join_broadcasts_never_reach_unauthed_participants(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -214,6 +218,7 @@ async def test_join_broadcasts_never_reach_unauthed_participants(
         assert [entry.indexUser for entry in rep.participants] == [1, 2]
 
 
+@patch_backend_config_for_editics()
 async def test_reconnection_before_auth(alice_editics: EditicsSessionClient) -> None:
     # Reconnection is meaningless if the participant hasn't done a `auth` before,
     # so it is just ignored...
@@ -248,6 +253,7 @@ async def test_reconnection_before_auth(alice_editics: EditicsSessionClient) -> 
         assert rep.participantIndexUser == 2
 
 
+@patch_backend_config_for_editics()
 async def test_reconnection_participant_session_id_mismatch(
     alice_editics: EditicsSessionClient,
 ) -> None:
@@ -266,6 +272,7 @@ async def test_reconnection_participant_session_id_mismatch(
 @pytest.mark.parametrize(
     "kind", ("view", "edit_last_change_from_self", "edit_last_change_from_others")
 )
+@patch_backend_config_for_editics()
 async def test_reconnection_with_changes(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -378,6 +385,7 @@ async def test_reconnection_with_changes(
     assert isinstance(rep, EditicsServerEventAuth)
 
 
+@patch_backend_config_for_editics()
 async def test_reconnection_cannot_change_participant_mode(
     alice_editics: EditicsSessionClient,
 ) -> None:
@@ -426,6 +434,7 @@ async def test_reconnection_cannot_change_participant_mode(
             assert rep.participantIndexUser == 1
 
 
+@patch_backend_config_for_editics()
 async def test_participant_session_id_of_another_device_is_refused(
     alice_editics: EditicsSessionClient,
     bob_editics: EditicsSessionClient,
@@ -482,6 +491,7 @@ async def test_participant_session_id_of_another_device_is_refused(
     # and hence Bob could re-use it (since it is no longer linked to Alice in any way).
 
 
+@patch_backend_config_for_editics()
 async def test_read_only_realm_role_must_join_in_view_mode(
     bob_editics: EditicsSessionClient,
 ) -> None:
@@ -498,6 +508,7 @@ async def test_read_only_realm_role_must_join_in_view_mode(
         assert exc.value.rep.status_code == EditicsHttpStatus.ReaderMustBeViewer.value
 
 
+@patch_backend_config_for_editics()
 async def test_write_realm_role_can_join_in_view_mode(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -524,6 +535,7 @@ async def test_write_realm_role_can_join_in_view_mode(
             assert [p.view for p in rep.participants] == [True, False]
 
 
+@patch_backend_config_for_editics()
 async def test_viewer_cannot_send_editor_only_events(
     alice_editics: EditicsSessionClient,
     bob_editics: EditicsSessionClient,
@@ -567,6 +579,7 @@ async def test_viewer_cannot_send_editor_only_events(
             assert exc.value.rep.status_code == EditicsHttpStatus.ParticipantNotAuth.value
 
 
+@patch_backend_config_for_editics()
 async def test_full_event_channel_closes_the_sse_connection(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -615,6 +628,7 @@ async def test_full_event_channel_closes_the_sse_connection(
     assert not bob_participant.connected
 
 
+@patch_backend_config_for_editics()
 async def test_close_by_last_participant_destroys_session(
     alice_editics: EditicsSessionClient,
     backend: Backend,
@@ -634,6 +648,7 @@ async def test_close_by_last_participant_destroys_session(
         assert backend.editics._document_sessions == {}
 
 
+@patch_backend_config_for_editics()
 async def test_sse_deco_on_role_change(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -741,6 +756,7 @@ async def test_sse_deco_on_role_change(
     )
 
 
+@patch_backend_config_for_editics()
 async def test_delete_index_defensive_handling(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -812,6 +828,7 @@ async def test_delete_index_defensive_handling(
         assert len(session.changes) == 3
 
 
+@patch_backend_config_for_editics()
 async def test_send_too_large(
     backend: Backend,
     alice_editics: EditicsSessionClient,
@@ -850,6 +867,7 @@ async def test_send_too_large(
         assert exc.value.rep.status_code == 413
 
 
+@patch_backend_config_for_editics()
 async def test_zombie_sse_teardown_does_not_evict_the_participant(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -966,6 +984,7 @@ async def test_zombie_sse_teardown_does_not_evict_the_participant(
 @pytest.mark.parametrize(
     "kind", ("organization_expired", "user_revoked_or_frozen", "realm_unshared", "realm_archived")
 )
+@patch_backend_config_for_editics()
 async def test_kicks_participant_out(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -1109,6 +1128,7 @@ async def test_kicks_participant_out(
     ]
 
 
+@patch_backend_config_for_editics()
 async def test_save_changes_without_is_save_lock_takes_the_lock(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -1148,6 +1168,7 @@ async def test_save_changes_without_is_save_lock_takes_the_lock(
         assert len(session.changes) == 2
 
 
+@patch_backend_config_for_editics()
 async def test_save_changes_while_save_lock_held_by_another_participant_kicks(
     backend: Backend,
     coolorg: CoolorgRpcClients,

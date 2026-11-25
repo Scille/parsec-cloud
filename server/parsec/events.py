@@ -475,6 +475,7 @@ class EventOrganizationConfig(BaseModel):
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
     realm_minimum_archiving_period_before_deletion: int
+    editics_server_urls: list[str]
 
     def is_event_for_client(self, client: RegisteredClient) -> bool:
         return self.organization_id == client.organization_id
@@ -486,6 +487,7 @@ class EventOrganizationConfig(BaseModel):
                 active_users_limit=self.active_users_limit,
                 sse_keepalive_seconds=sse_keepalive,
                 realm_minimum_archiving_period_before_deletion=self.realm_minimum_archiving_period_before_deletion,
+                editics_server_urls=self.editics_server_urls,
             ),
             None,
         )

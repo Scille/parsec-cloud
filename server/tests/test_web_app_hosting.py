@@ -83,19 +83,19 @@ async def assert_route(
     return rep
 
 
-@pytest.mark.parametrize("editics_server_addr_set", (True, False))
+@pytest.mark.parametrize("editics_enabled", (True, False))
 @pytest.mark.asyncio
-async def test_web_app_served(backend: Backend, web_app_dir: Path, editics_server_addr_set: bool):
-    if editics_server_addr_set:
-        backend.config.editics_server_addr = ParsecAddr(
-            hostname=EDITICS_SERVER_DOMAIN, port=None, use_ssl=True
-        )
+async def test_web_app_served(backend: Backend, web_app_dir: Path, editics_enabled: bool):
+    if editics_enabled:
+        backend.config.editics_server_addrs = {
+            ParsecAddr(hostname=EDITICS_SERVER_DOMAIN, port=None, use_ssl=True)
+        }
 
     async with web_app_client_factory(backend, web_app_dir) as client:
         main_assert_route = partial(assert_route, client, MAIN_SERVER_DOMAIN)
 
         async def editics_assert_route(*args, **kwargs):
-            if not editics_server_addr_set:
+            if not editics_enabled:
                 # If the server doesn't know the editics domain, then a request
                 # coming from there is equivalent to any other domain name, including
                 # the main server domain!

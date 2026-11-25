@@ -34,22 +34,45 @@ def patch_backend_config[T: Callable[..., Any]](
     """
     Decorator to patch the backend config *before* it gets used to build the backend instance.
 
-    This is useful to ensure the new config doesn't get ignored due to a cache
-    initialized at backend instantiation.
+    This is useful for config that gets used during backend initialization (and
+    hence cannot simply be patched by doing `backend.config.foo = ...` at
+    the beginning of the test).
 
     usage:
 
-        def patch_backend_config(backend_config: BackendConfig) -> BackendConfig:
+        def _patch_backend_config(backend_config: BackendConfig) -> BackendConfig:
             backend_config.sse_keepalive = 42
             return backend_config
 
-        @patch_backend_config(patch_backend_config)
+        @patch_backend_config(_patch_backend_config)
         async def test_foo(backend: Backend) -> None:
             assert backend.config.sse_keepalive == 42
     """
 
     def wrapper(fn: T) -> T:
         fn.backend_config_build_hook = build_hook  # type: ignore
+        return fn
+
+    return wrapper
+
+
+def patch_backend_config_for_editics[T: Callable[..., Any]](
+    editics_servers: int = 1,
+) -> Callable[[T], T]:
+    """
+    Same as `patch_backend_config` decorator, build dedicated to configure only the editics servers.
+    """
+    assert editics_servers > 0
+
+    def _patch_backend_config(backend_config: BackendConfig) -> BackendConfig:
+        backend_config.editics_server_addrs = {
+            ParsecAddr(hostname=f"editics{i}.parsec.invalid", port=None, use_ssl=True)
+            for i in range(editics_servers)
+        }
+        return backend_config
+
+    def wrapper(fn: T) -> T:
+        fn.backend_config_build_hook = _patch_backend_config  # type: ignore
         return fn
 
     return wrapper

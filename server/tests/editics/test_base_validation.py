@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
+import httpx
 import httpx_sse
 import pytest
 
@@ -19,12 +20,15 @@ from parsec.editics_protocol import (
     EditicsTimestampMs,
 )
 from tests.common import (
+    EDITICS_DOCUMENT_ID,
     INITIAL_CONTENT_MEDIA_TYPE,
+    SERVER_DOMAIN,
     Backend,
     CoolorgRpcClients,
     EditicsSessionClient,
     alice_gives_profile,
     pack_initial_content_bundle,
+    patch_backend_config_for_editics,
     wksp1_alice_update_archiving_config,
 )
 
@@ -46,6 +50,7 @@ def _auth_event(
 
 
 @pytest.mark.parametrize("bad_api_version", [None, "not a version", "2.0", "1"])
+@patch_backend_config_for_editics()
 async def test_unsupported_api_version(
     alice_editics: EditicsSessionClient, bad_api_version: str | None
 ) -> None:
@@ -105,6 +110,7 @@ async def test_unsupported_api_version(
     assert "Api-Version" not in rep.headers
 
 
+@patch_backend_config_for_editics()
 async def test_compatible_api_version(alice_editics: EditicsSessionClient) -> None:
     newer_but_compatible_api_version = (
         f"{EDITICS_API_VERSION.version}.{EDITICS_API_VERSION.version + 10}"
@@ -169,6 +175,83 @@ async def test_compatible_api_version(alice_editics: EditicsSessionClient) -> No
         )
 
 
+async def _assert_requests(
+    editics_client: EditicsSessionClient,
+    expected_status_code: EditicsHttpStatus | Literal["success"],
+    base_headers: dict[str, str] | None = None,
+) -> tuple[httpx.Response, httpx.Response, httpx.Response, httpx.Response]:
+    base_headers = editics_client.base_headers if base_headers is None else base_headers
+
+    # POST initial content
+
+    rep_post = await editics_client.raw_client.post(
+        f"{editics_client.base_url}/initial_content",
+        params=editics_client.base_params,
+        headers={
+            **base_headers,
+            "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
+        },
+        content=pack_initial_content_bundle(1, [b"<Editor.bin>"]),
+    )
+    if expected_status_code == "success":
+        assert rep_post.status_code == 204
+    else:
+        assert rep_post.status_code == expected_status_code.value
+    assert rep_post.headers["Api-Version"] == str(EDITICS_API_VERSION)
+
+    # GET initial content
+
+    rep_get = await editics_client.raw_client.get(
+        f"{editics_client.base_url}/initial_content",
+        params=editics_client.base_params,
+        headers={
+            **base_headers,
+            "Accept": "application/octet-stream",
+        },
+    )
+    if expected_status_code == "success":
+        assert rep_get.status_code == 200
+    else:
+        assert rep_get.status_code == expected_status_code.value
+    assert rep_get.headers["Api-Version"] == str(EDITICS_API_VERSION)
+
+    # Send
+
+    rep_send = await editics_client.raw_client.post(
+        f"{editics_client.base_url}/send",
+        params=editics_client.base_params,
+        headers={**base_headers, "Content-Type": "application/json"},
+        content=_auth_event(mode="view").model_dump_json(),
+    )
+    if expected_status_code == "success":
+        assert rep_send.status_code == 204
+    else:
+        assert rep_send.status_code == expected_status_code.value
+    assert rep_send.headers["Api-Version"] == str(EDITICS_API_VERSION)
+
+    # Listen
+
+    rep_listen = await editics_client.raw_client.send(
+        editics_client.raw_client.build_request(
+            "GET",
+            f"{editics_client.base_url}/listen",
+            params=editics_client.base_params,
+            headers={**base_headers, "Accept": "text/event-stream"},
+        ),
+        # The request is a SSE, it never finishes in case of HTTP 200
+        stream=True,
+    )
+    if expected_status_code == "success":
+        assert rep_listen.status_code == 200
+    else:
+        assert rep_listen.status_code == expected_status_code.value
+        await rep_listen.aread()
+        assert rep_listen.headers["Api-Version"] == str(EDITICS_API_VERSION)
+
+    return (rep_post, rep_get, rep_send, rep_listen)
+
+
+@patch_backend_config_for_editics()
 async def test_bad_auth(coolorg: CoolorgRpcClients, alice_editics: EditicsSessionClient) -> None:
     raw_bad_token = AuthenticatedToken.generate_raw(
         device_id=coolorg.alice.device_id,
@@ -216,117 +299,13 @@ async def test_bad_auth(coolorg: CoolorgRpcClients, alice_editics: EditicsSessio
         else:
             base_headers["Authorization"] = bad_authorization_value
 
-        # POST initial content
-
-        rep = await alice_editics.raw_client.post(
-            f"{alice_editics.base_url}/initial_content",
-            params=alice_editics.base_params,
-            headers={
-                **base_headers,
-                "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
-            },
-            content=pack_initial_content_bundle(1, [b"<Editor.bin>"]),
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # GET initial content
-
-        rep = await alice_editics.raw_client.get(
-            f"{alice_editics.base_url}/initial_content",
-            params=alice_editics.base_params,
-            headers={
-                **base_headers,
-                "Accept": "text/event-stream",
-            },
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # Send
-
-        rep = await alice_editics.raw_client.post(
-            f"{alice_editics.base_url}/send",
-            params=alice_editics.base_params,
-            headers={
-                **base_headers,
-                "Content-Type": "application/json",
-            },
-            content=_auth_event(mode="edit").model_dump_json(),
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # Listen
-
-        rep = await alice_editics.raw_client.get(
-            f"{alice_editics.base_url}/listen",
-            params=alice_editics.base_params,
-            headers={
-                **base_headers,
-                "Accept": "text/event-stream",
-            },
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
+        await _assert_requests(alice_editics, expected_status_code, base_headers)
 
 
+@patch_backend_config_for_editics()
 async def test_user_revoked_frozen(
     backend: Backend, coolorg: CoolorgRpcClients, bob_editics: EditicsSessionClient
 ) -> None:
-    async def _assert_requests(expected_status_code: EditicsHttpStatus) -> None:
-        # POST initial content
-
-        rep = await bob_editics.raw_client.post(
-            f"{bob_editics.base_url}/initial_content",
-            params=bob_editics.base_params,
-            headers={
-                **bob_editics.base_headers,
-                "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
-            },
-            content=pack_initial_content_bundle(1, [b"<Editor.bin>"]),
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # GET initial content
-
-        rep = await bob_editics.raw_client.get(
-            f"{bob_editics.base_url}/initial_content",
-            params=bob_editics.base_params,
-            headers={
-                **bob_editics.base_headers,
-                "Accept": "text/event-stream",
-            },
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # Send
-
-        rep = await bob_editics.raw_client.post(
-            f"{bob_editics.base_url}/send",
-            params=bob_editics.base_params,
-            headers={
-                **bob_editics.base_headers,
-                "Content-Type": "application/json",
-            },
-            content=_auth_event(mode="edit").model_dump_json(),
-        )
-        assert rep.status_code == expected_status_code.value
-
-        # Listen
-
-        rep = await bob_editics.raw_client.get(
-            f"{bob_editics.base_url}/listen",
-            params=bob_editics.base_params,
-            headers={
-                **bob_editics.base_headers,
-                "Accept": "text/event-stream",
-            },
-        )
-        assert rep.status_code == expected_status_code.value
-
     # Frozen user
 
     outcome = await backend.user.freeze_user(
@@ -337,93 +316,65 @@ async def test_user_revoked_frozen(
     )
     assert isinstance(outcome, UserInfo)
 
-    await _assert_requests(EditicsHttpStatus.UserFrozen)
+    await _assert_requests(bob_editics, EditicsHttpStatus.UserFrozen)
 
     # Revoked user
 
     await alice_gives_profile(coolorg, backend, recipient=coolorg.bob.user_id, new_profile=None)
 
-    await _assert_requests(EditicsHttpStatus.UserRevoked)
+    await _assert_requests(bob_editics, EditicsHttpStatus.UserRevoked)
 
 
+@patch_backend_config_for_editics()
 async def test_realm_not_found_is_indistinguishable_from_realm_without_role(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
 ) -> None:
-    outcomes = []
-    for realm_id in (VlobID.new(), coolorg.wksp1_id):
-        mallory_editics = EditicsSessionClient(
-            who=coolorg.mallory,
-            realm_id=realm_id,
-            document_id=coolorg.wksp1_id,
-        )
+    # Realm not found
 
-        # POST initial content
-
-        rep = await mallory_editics.raw_client.post(
-            f"{mallory_editics.base_url}/initial_content",
-            params=mallory_editics.base_params,
-            headers={
-                **mallory_editics.base_headers,
-                "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
-            },
-            content=pack_initial_content_bundle(1, [b"<Editor.bin>"]),
-        )
-        outcomes.append(("send", rep.status_code, rep.json()))
-
-        # GET initial content
-
-        rep = await mallory_editics.raw_client.get(
-            f"{mallory_editics.base_url}/initial_content",
-            params=mallory_editics.base_params,
-            headers={
-                **mallory_editics.base_headers,
-                "Accept": "text/event-stream",
-            },
-        )
-        outcomes.append(("send", rep.status_code, rep.json()))
-
-        # Send
-
-        rep = await mallory_editics.raw_client.post(
-            f"{mallory_editics.base_url}/send",
-            params=mallory_editics.base_params,
-            headers={**mallory_editics.base_headers, "Content-Type": "application/json"},
-            content=_auth_event(mode="view").model_dump_json(),
-        )
-        outcomes.append(("send", rep.status_code, rep.json()))
-
-        # Listen
-
-        rep = await mallory_editics.raw_client.get(
-            f"{mallory_editics.base_url}/listen",
-            params=mallory_editics.base_params,
-            headers={**mallory_editics.base_headers, "Accept": "text/event-stream"},
-        )
-        outcomes.append(("listen", rep.status_code, rep.json()))
-
+    mallory_editics = EditicsSessionClient(
+        backend=backend,
+        who=coolorg.mallory,
+        realm_id=VlobID.new(),
+        document_id=coolorg.wksp1_id,
+    )
     (
-        post_initial_content_nonexistent,
-        fetch_initial_content_nonexistent,
-        send_nonexistent,
-        listen_nonexistent,
-        post_initial_content_without_role,
-        fetch_initial_content_without_role,
-        send_without_role,
-        listen_without_role,
-    ) = outcomes
+        post_rep_nonexistent,
+        fetch_rep_nonexistent,
+        send_rep_nonexistent,
+        listen_rep_nonexistent,
+    ) = await _assert_requests(mallory_editics, EditicsHttpStatus.UserNoRealmRole)
+
+    # Realm without role
+
+    mallory_editics = EditicsSessionClient(
+        backend=backend,
+        who=coolorg.mallory,
+        realm_id=coolorg.wksp1_id,
+        document_id=coolorg.wksp1_id,
+    )
+    (
+        post_rep_without_role,
+        fetch_rep_without_role,
+        send_rep_without_role,
+        listen_rep_without_role,
+    ) = await _assert_requests(mallory_editics, EditicsHttpStatus.UserNoRealmRole)
 
     # Information hiding: an organization member must not learn whether a realm
     # it has no access to exists or not
-    assert post_initial_content_nonexistent == post_initial_content_without_role
-    assert fetch_initial_content_nonexistent == fetch_initial_content_without_role
-    assert send_nonexistent == send_without_role
-    assert listen_nonexistent == listen_without_role
-    assert post_initial_content_nonexistent[1] == EditicsHttpStatus.UserNoRealmRole.value
-    assert fetch_initial_content_nonexistent[1] == EditicsHttpStatus.UserNoRealmRole.value
-    assert send_nonexistent[1] == EditicsHttpStatus.UserNoRealmRole.value
-    assert listen_nonexistent[1] == EditicsHttpStatus.UserNoRealmRole.value
+
+    def _assert_similar(rep1: httpx.Response, rep2: httpx.Response):
+        assert rep1.status_code == rep2.status_code
+        assert rep1.headers == rep2.headers
+        assert rep1.json() == rep2.json()
+
+    _assert_similar(post_rep_without_role, post_rep_nonexistent)
+    _assert_similar(fetch_rep_without_role, fetch_rep_nonexistent)
+    _assert_similar(send_rep_without_role, send_rep_nonexistent)
+    _assert_similar(listen_rep_without_role, listen_rep_nonexistent)
 
 
+@patch_backend_config_for_editics()
 async def test_bad_content_type_and_accept_headers(alice_editics: EditicsSessionClient) -> None:
     # POST initial content (Content-Type)
 
@@ -467,6 +418,7 @@ async def test_bad_content_type_and_accept_headers(alice_editics: EditicsSession
 
 
 @pytest.mark.parametrize("kind", ("archived", "deletion_planned"))
+@patch_backend_config_for_editics()
 async def test_realm_archived(
     backend: Backend,
     coolorg: CoolorgRpcClients,
@@ -489,54 +441,6 @@ async def test_realm_archived(
         case unknown:
             assert False, unknown
 
-    async def _assert_requests(
-        editics_client: EditicsSessionClient, expected_status_code: EditicsHttpStatus
-    ) -> None:
-        # POST initial content
-
-        rep = await editics_client.raw_client.post(
-            f"{editics_client.base_url}/initial_content",
-            params=editics_client.base_params,
-            headers={
-                **editics_client.base_headers,
-                "Content-Type": INITIAL_CONTENT_MEDIA_TYPE,
-            },
-            content=pack_initial_content_bundle(1, [b"<Editor.bin>"]),
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # GET initial content
-
-        rep = await editics_client.raw_client.get(
-            f"{editics_client.base_url}/initial_content",
-            params=editics_client.base_params,
-            headers={**editics_client.base_headers, "Accept": "text/event-stream"},
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # Send
-
-        rep = await editics_client.raw_client.post(
-            f"{editics_client.base_url}/send",
-            params=editics_client.base_params,
-            headers={**editics_client.base_headers, "Content-Type": "application/json"},
-            content=_auth_event(mode="view").model_dump_json(),
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
-        # Listen
-
-        rep = await editics_client.raw_client.get(
-            f"{editics_client.base_url}/listen",
-            params=editics_client.base_params,
-            headers={**editics_client.base_headers, "Accept": "text/event-stream"},
-        )
-        assert rep.status_code == expected_status_code.value
-        assert rep.headers["Api-Version"] == str(EDITICS_API_VERSION)
-
     # A realm member is told the realm is archived (or deletion planned)
 
     await _assert_requests(alice_editics, EditicsHttpStatus.RealmArchived)
@@ -545,8 +449,53 @@ async def test_realm_archived(
     # the realm exists (and is archived!) from the archived-specific error
 
     mallory_editics = EditicsSessionClient(
+        backend=backend,
         who=coolorg.mallory,
         realm_id=coolorg.wksp1_id,
         document_id=alice_editics.document_id,
     )
     await _assert_requests(mallory_editics, EditicsHttpStatus.UserNoRealmRole)
+
+
+async def test_editics_globally_disabled(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    alice_editics = EditicsSessionClient(
+        backend=backend,
+        who=coolorg.alice,
+        realm_id=coolorg.wksp1_id,
+        document_id=EDITICS_DOCUMENT_ID,
+        # Any host should be rejected
+        server_url=f"http://{SERVER_DOMAIN}",
+    )
+    await _assert_requests(alice_editics, EditicsHttpStatus.BadEditicsServerInstance)
+
+
+@patch_backend_config_for_editics(editics_servers=3)
+async def test_editics_document_session_sharding(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    # Sharding depends on the organization ID that is not stable across tests.
+    # So here there should be one random editics netloc that succeed (HTTP 200/204),
+    # and the others two that fail (HTTP 465).
+
+    good_netloc = backend.editics.get_sharding_netloc_for_document(
+        coolorg.organization_id, coolorg.wksp1_id, EDITICS_DOCUMENT_ID
+    )
+    assert good_netloc is not None
+
+    assert len(backend.config.editics_server_addrs) == 3
+    for addr in backend.config.editics_server_addrs:
+        alice_editics = EditicsSessionClient(
+            backend=backend,
+            who=coolorg.alice,
+            realm_id=coolorg.wksp1_id,
+            document_id=EDITICS_DOCUMENT_ID,
+            server_url=addr.to_http_url(),
+        )
+        if addr.netloc == good_netloc:
+            await _assert_requests(alice_editics, "success")
+        else:
+            await _assert_requests(alice_editics, EditicsHttpStatus.BadEditicsServerInstance)

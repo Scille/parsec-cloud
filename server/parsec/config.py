@@ -307,9 +307,15 @@ class BackendConfig:
     # - For invitation URL in emails
     # - In the redirect API (e.g. `GET /redirect/FOO` -> `302 <server_addr>/FOO`)
     server_addr: ParsecAddr
-    # URL to reach this server from the editics domain
-    # This is typically used to serve the editics pages in an isolated iframe.
-    editics_server_addr: ParsecAddr | None = None
+    # URLs to reach all the editics server instances (i.e. the server instances
+    # handling the editics document collaborative edition sessions).
+    # This is used for:
+    # - In web app for serving the editics pages in an isolated iframe.
+    # - Run the sharding algorithm determining which editics server instance hosts
+    #   a given document session.
+    # Empty means editics is disabled for this server instance.
+    editics_server_addrs: set[ParsecAddr] = field(default_factory=set)
+
     # Max allowed size for the whole document opened in editics.
     # This limit is used in initial content upload route.
     editics_max_document_size: int = 100 * 1024**2  # 100Mo

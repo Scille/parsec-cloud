@@ -29,6 +29,7 @@ from tests.common import (
     EditicsSessionClient,
     RpcTransportError,
     pack_initial_content_bundle,
+    patch_backend_config_for_editics,
     wksp1_alice_gives_role,
 )
 
@@ -64,6 +65,7 @@ async def _iter_chunks(raw: bytes, chunk_size: int) -> AsyncIterator[bytes]:
 
 
 @pytest.mark.parametrize("chunk_size", [1, 2, 3, 7, 1024])
+@patch_backend_config_for_editics()
 async def test_upload_streamed_bundle_is_chunking_agnostic(
     alice_editics: EditicsSessionClient, chunk_size: int
 ) -> None:
@@ -93,6 +95,7 @@ async def test_upload_streamed_bundle_is_chunking_agnostic(
         pack("!I", 1) + pack("!I", 42) + b"<truncated ciphertext>",
     ],
 )
+@patch_backend_config_for_editics()
 async def test_upload_invalid_bundle(
     alice_editics: EditicsSessionClient, raw_bundle: bytes
 ) -> None:
@@ -108,6 +111,7 @@ async def test_upload_invalid_bundle(
         assert rep.json()["detail"] == {"detail": "Bad content type or invalid body"}
 
 
+@patch_backend_config_for_editics()
 async def test_upload_payload_too_large(
     alice_editics: EditicsSessionClient, backend: Backend
 ) -> None:
@@ -133,6 +137,7 @@ async def test_upload_payload_too_large(
     assert rep.status_code == EditicsHttpStatus.ContentTooLarge.value
 
 
+@patch_backend_config_for_editics()
 async def test_initial_content_can_be_uploaded_before_any_participant(
     alice_editics: EditicsSessionClient,
 ) -> None:
@@ -151,6 +156,7 @@ async def test_initial_content_can_be_uploaded_before_any_participant(
         assert await alice_editics.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
 
 
+@patch_backend_config_for_editics()
 async def test_initial_content_lifecycle(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -223,6 +229,7 @@ async def test_initial_content_lifecycle(
             assert await bob_editics.fetch_initial_content() == (1, INITIAL_CONTENT_PARTS)
 
 
+@patch_backend_config_for_editics()
 async def test_save_changes_refused_before_initial_content(
     backend: Backend,
     alice_editics: EditicsSessionClient,
@@ -252,6 +259,7 @@ async def test_save_changes_refused_before_initial_content(
         assert len(session.changes) == 1
 
 
+@patch_backend_config_for_editics()
 async def test_viewer_cannot_upload_initial_content(
     backend: Backend,
     bob_editics: EditicsSessionClient,
@@ -263,6 +271,7 @@ async def test_viewer_cannot_upload_initial_content(
     assert backend.editics._document_sessions == {}
 
 
+@patch_backend_config_for_editics()
 async def test_initial_content_upload_is_broadcast_to_viewers(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -291,6 +300,7 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
             # Mallory joins as an editor while the auth lock is held: she is parked,
             # i.e. his handshake will complete when the lock will be released
             mallory_editics = EditicsSessionClient(
+                backend=backend,
                 who=coolorg.mallory,
                 realm_id=coolorg.wksp1_id,
                 document_id=alice_editics.document_id,
@@ -336,6 +346,7 @@ async def test_initial_content_upload_is_broadcast_to_viewers(
                 assert isinstance(event, EditicsServerEventMessage)
 
 
+@patch_backend_config_for_editics()
 async def test_participant_session_id_of_another_device_is_refused(
     alice_editics: EditicsSessionClient,
     bob_editics: EditicsSessionClient,

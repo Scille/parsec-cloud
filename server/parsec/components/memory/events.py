@@ -88,6 +88,7 @@ class MemoryEventsComponent(BaseEventsComponent):
             user_profile_outsider_allowed=org.user_profile_outsider_allowed,
             active_users_limit=org.active_users_limit,
             realm_minimum_archiving_period_before_deletion=org.realm_minimum_archiving_period_before_deletion,
+            editics_server_urls=self._editics_server_urls,
         )
 
         user_realms = set()
