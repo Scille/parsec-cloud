@@ -256,10 +256,16 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
   let collaborative: EditicsCollaborativeOptions | undefined = undefined;
   if (Env.getEditicsMode() === 'collaborative') {
     if (contentInfo.timestamp) {
+      // Older version of a file should under no condition be opened in collaborative
+      // mode as it would conflict with other clients trying to open the current
+      // version of the file!
       window.nativeAPI.log('info', 'Editics: workspace history, opening the document in offline mode');
     }
     const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
     if (workspaceInfoResult.ok && workspaceInfoResult.value.isArchived) {
+      // File from archived workspace could in theory be opened in collaborative
+      // mode, however there is not much to gain from it since only viewers are
+      // allowed.
       window.nativeAPI.log('info', 'Editics: archived workspace, opening the document in offline mode');
     } else {
       const clientInfo = await getClientInfo();
