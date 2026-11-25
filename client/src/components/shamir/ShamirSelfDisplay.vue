@@ -232,17 +232,6 @@ async function deleteShamir(): Promise<void> {
     gap: ms.spacing('gap-lg');
     margin-top: 1.5rem;
     justify-content: space-between;
-
-    &__button {
-      .button-delete {
-        color: ms.color('text-error-default');
-
-        &.required-action {
-          color: ms.color('text-error-on-color') !important;
-          width: 100% !important;
-        }
-      }
-    }
   }
 }
 

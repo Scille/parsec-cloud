@@ -11,7 +11,7 @@
       :model-value="inputValue"
     />
     <ion-text
-      class="form-helperText"
+      class="user-select__error"
       v-if="errorMessage"
     >
       {{ $msTranslate(errorMessage) }}
@@ -141,7 +141,7 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
-.form-helperText {
+.user-select__error {
   @include ms.font('body-sm-medium');
   position: absolute;
   bottom: -2rem;
