@@ -1,0 +1,112 @@
+# git-cliff ~ configuration file
+# https://git-cliff.org/docs/configuration
+"$schema" = "https://www.schemastore.org/git-cliff.json"
+
+
+[changelog]
+# Used by `--prepend` to remove the previous header.
+header_marker = "<!-- git-cliff: end of header -->"
+# A Tera template to be rendered for each release in the changelog.
+# See https://keats.github.io/tera/#getting-started
+body = """
+{{ throw(message="git-cliff should be called with `--body-file=misc/changelog-git-cliff.md.j2`") }}
+"""
+# Remove leading and trailing whitespaces from the changelog's body.
+trim = true
+# Render body even when there are no releases to process.
+render_always = true
+# An array of regex based postprocessors to modify the changelog.
+postprocessors = [
+    # Replace the placeholder <REPO> with a URL.
+    #{ pattern = '<REPO>', replace = "https://github.com/orhun/git-cliff" },
+    # Collapse consecutive blank lines (the template emits two between sections)
+    { pattern = '\n?\n\n+', replace = "\n\n" },
+]
+# render body even when there are no releases to process
+# render_always = true
+# output file path
+# output = "test.md"
+
+[git]
+# Parse commits according to the conventional commits specification.
+# See https://www.conventionalcommits.org
+conventional_commits = true
+# Exclude commits that do not match the conventional commits specification.
+filter_unconventional = true
+# Require all commits to be conventional.
+# Takes precedence over filter_unconventional.
+require_conventional = false
+# Split commits on newlines, treating each line as an individual commit.
+split_commits = false
+# An array of regex based parsers to modify commit messages prior to further processing.
+#
+# NOTE: Some commits have multiple scopes (delimited by `,`), e.g.
+# `feat(libparsec, server): foo`. Since a changelog section is per-component,
+# we normalize the scope list to the first scope in the list that this
+# changelog covers, so the commit lands in the section of the CLI, libparsec
+# or Rust (instead of being filed under a bogus `libparsec,server` "scope").
+commit_preprocessors = [
+    # Replace issue numbers with link templates to be updated in `changelog.postprocessors`.
+    #{ pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))"},
+    # `feat(cli, server): foo` -> `feat(cli): foo`
+    # `feat(server, rust): foo` -> `feat(rust): foo`
+    # `feat(libparsec, server): foo` -> `feat(libparsec): foo`
+    { pattern = 'package-server', replace = 'server' },
+    { pattern = 'package-\*', replace = 'server' },
+    { pattern = '^(?P<type>[a-z]+)\((?:\s*[^,)]+,)*\s*(?P<scope>server|rust|(?:libparsec(?:/\w+)?))(?:\s*,\s*[^)]*)?\)', replace = "$type($scope)" },
+    # Check spelling of the commit message using https://github.com/crate-ci/typos.
+    # If the spelling is incorrect, it will be fix automatically.
+    #{ pattern = '.*', replace_command = 'typos --write-changes -' },
+]
+# Assigns commits to groups.
+# Optionally sets the commit's scope and can decide to exclude commits from further processing.
+#
+# NOTE: This changelog is only about the CLI, so we only keep the commits
+# whose scope is `cli` or `rust` (i.e. change the CLI and/or the Rust workspace).
+#
+# Doing this with a single negate parser is not possible: the regex engine
+# used by git-cliff (the Rust `regex` crate) does not support negative
+# lookahead (see https://github.com/rust-lang/regex/issues/127), so the scope
+# restriction has to be repeated in each type parser.
+commit_parsers = [
+    { field = "scope", pattern = "^server$", scope = "<!-- 0 -->🌐 Server", continue = true },
+    { field = "scope", pattern = '^libparsec(?:/\w+)?$', scope = "<!-- 1 -->📚 Libparsec", continue = true },
+    { field = "scope", pattern = "^rust$", scope = "<!-- 2 -->🦀 Rust", continue = true },
+    { message = '^feat\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
+    { message = '^fix\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
+    { message = '^docs\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
+    { message = '^perf\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 4 -->⚡ Performance" },
+    { message = '^refactor\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 2 -->🚜 Refactor" },
+    { message = '^style\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
+    { message = '^test\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 6 -->🧪 Testing" },
+    { message = '^(?:chore|ci)\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
+    { message = '^revert\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
+    # Any other type (e.g. `build`) scoped `server`/`rust`
+    { message = '^[a-z]+\((?:server|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
+]
+# Prevent commits that are breaking from being excluded by commit parsers.
+protect_breaking_commits = false
+# Exclude commits that are not matched by any commit parser.
+filter_commits = true
+link_parsers = [
+    { pattern = '(?P<owner>\S+)/(?P<repo>\S+)#(?P<id>\d+)', href = "https://github.com/$owner/$repo/issues/$id" },
+    { pattern = '\s#(\d+)', text = "#$1", href = "https://github.com/Scille/parsec-cloud/issues/$1" },
+]
+# Fail on a commit that is not matched by any commit parser.
+# An array of link parsers for extracting external references, and turning them into URLs, using regex.fail_on_unmatched_commit = false
+# Include only the tags that belong to the current branch.
+use_branch_tags = false
+# Order releases topologically instead of chronologically.
+topo_order = false
+# Order commits topologically instead of chronologically.
+topo_order_commits = true
+# Order of commits in each group/release within the changelog.
+# Allowed values: newest, oldest
+sort_commits = "oldest"
+# Process submodules commits
+recurse_submodules = false
+
+# FIXME: Slow down a lot `git-cliff` on this repo (15sec each time)
+# [remote.github]
+# owner = "Scille"
+# repo = "parsec-cloud"
