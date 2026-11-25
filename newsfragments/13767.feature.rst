@@ -1,1 +1,0 @@
-Added an option to convert documents, spreadsheets and presentations to PDF from the document editor.

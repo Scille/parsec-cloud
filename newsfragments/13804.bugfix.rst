@@ -1,1 +1,0 @@
-Fixed a bug in the *What's new* banner close button making it impossible to click.

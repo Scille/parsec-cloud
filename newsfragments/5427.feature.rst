@@ -1,1 +1,0 @@
-Added *Dark* theme together with a *System* theme option to match the user's system theme.

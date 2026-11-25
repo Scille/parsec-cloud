@@ -1,1 +1,0 @@
-Global file upload status is now displayed in the *Background tasks* window when files are being synchronized with the server.

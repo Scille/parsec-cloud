@@ -1,1 +1,0 @@
-Improved document editor loading screen to hide blank background during OnlyOffice loading.

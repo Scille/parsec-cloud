@@ -1,1 +1,0 @@
-Added *Invited by* and *Revoked by* fields in the user details
