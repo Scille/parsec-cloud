@@ -136,8 +136,8 @@ Create an Organization
 #. Bootstrap the Organization
 
    #. Start Parsec client application (web or desktop)
-   #. Select :menuselection:`Create or join --> Join``
-   #. Paste the **bootstrap link** from previous step
+   #. Paste the **bootstrap link** from previous step under ``Do you have a Parsec link?``
+   #. Click ``Continue``
    #. Follow the instructions to create the first user of the Organization.
 
 
