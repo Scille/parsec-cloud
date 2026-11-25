@@ -31,12 +31,14 @@ fn task_future_factory(client: Arc<Client>, event_bus: EventBus) -> impl Future<
                 active_users_limit,
                 user_profile_outsider_allowed,
                 realm_minimum_archiving_period_before_deletion,
+                editics_server_urls,
             } = e;
             let new = ServerOrganizationConfig {
                 active_users_limit: *active_users_limit,
                 user_profile_outsider_allowed: *user_profile_outsider_allowed,
                 realm_minimum_archiving_period_before_deletion:
                     *realm_minimum_archiving_period_before_deletion,
+                editics_server_urls: editics_server_urls.clone(),
             };
             let mut config_has_changed = false;
 
