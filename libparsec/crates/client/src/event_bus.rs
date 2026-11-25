@@ -349,6 +349,7 @@ impl_events!(
         active_users_limit: ActiveUsersLimit,
         user_profile_outsider_allowed: bool,
         realm_minimum_archiving_period_before_deletion: u64,  // In seconds
+        editics_server_urls: Vec<String>,
     },
     /// This event is fired by the server config monitor.
     ///

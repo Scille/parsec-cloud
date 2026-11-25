@@ -69,8 +69,9 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
         APIEvent::OrganizationConfig {
             active_users_limit,
             user_profile_outsider_allowed,
-            realm_minimum_archiving_period_before_deletion,
             sse_keepalive_seconds: _,
+            realm_minimum_archiving_period_before_deletion,
+            editics_server_urls,
         } => {
             let event = EventServerConfigNotified {
                 active_users_limit,
@@ -79,6 +80,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
                     realm_minimum_archiving_period_before_deletion
                         .unwrap_or(0)
                         .max(0) as u64,
+                editics_server_urls: editics_server_urls.unwrap_or_else(Vec::new),
             };
             event_bus.send(&event);
         }

@@ -62,6 +62,7 @@ pub struct ServerOrganizationConfig {
     pub active_users_limit: ActiveUsersLimit,
     /// In seconds
     pub realm_minimum_archiving_period_before_deletion: u64,
+    pub editics_server_urls: Vec<String>,
 }
 
 // It's easy to provide "good enough" default value so that the config is guaranteed
@@ -74,6 +75,7 @@ impl Default for ServerOrganizationConfig {
             user_profile_outsider_allowed: false,
             active_users_limit: ActiveUsersLimit::NoLimit,
             realm_minimum_archiving_period_before_deletion: 0,
+            editics_server_urls: vec![],
         }
     }
 }
