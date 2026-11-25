@@ -152,14 +152,20 @@ class StaticFilesWithCacheControlAndSPARedirect(StaticFilesWithCacheControl):
 
 
 class EditicsHostIsolationMiddleware:
-    """Ensure the editics pages are only served from the editics domain.
+    """Ensure the editics pages are only served from the editics domains.
 
-    The server can be reached from two different domains:
+    The server can be reached from two different kinds of domains:
     - the main server domain (e.g. `app.parsec.cloud`), which must never serve
       the `editics/` pages (they are meant to be isolated in an iframe)
-    - the editics domain (e.g. `editics.app.parsec.cloud`), which must only
+    - the editics domains (e.g. `editics0.app.parsec.cloud`), which must only
       serve the `editics/` pages (in particular the main web app entry points
-      such as `index.html` or `assets/` must not be reachable from it)
+      such as `index.html` or `assets/` must not be reachable from them)
+
+    Note the identity of the editics server instance is defined by the `Host` header:
+    - We don't use the `X-Forwarded-Host` header since uvicorn doesn't secure it
+      yet (see https://github.com/Kludex/uvicorn/pull/2928).
+    - In production we should run behind a reverse proxy that takes care of
+      sanitizing the `Host` header (while still preserving it!).
 
     This middleware only wraps the `/client/*` mounts (the other routes, such
     as the RPC ones queried by the editics pages, are shared by both domains).
@@ -167,10 +173,8 @@ class EditicsHostIsolationMiddleware:
 
     def __init__(self, app: ASGIApp, mount_path: str, config: BackendConfig) -> None:
         self.app = app
-        self.editics_netloc = (
-            config.editics_server_addr.netloc.encode("latin-1")
-            if config.editics_server_addr
-            else None
+        self.editics_netlocs = tuple(
+            sorted(addr.netloc.lower().encode("latin-1") for addr in config.editics_server_addrs)
         )
         self.is_editics_path = mount_path.startswith(WEB_APP_EDITICS_URL)
         if self.is_editics_path:
@@ -186,9 +190,8 @@ class EditicsHostIsolationMiddleware:
             await self.app(scope, receive, send)
             return
 
-        is_editics_host = (
-            next((v for k, v in scope["headers"] if k == b"host"), b"") == self.editics_netloc
-        )
+        host = next((v for k, v in scope["headers"] if k == b"host"), b"")
+        is_editics_host = host.lower() in self.editics_netlocs
         if is_editics_host:
             if self.is_editics_path:
 
@@ -242,9 +245,9 @@ def app_factory(
         # their order of declaration!
         # (See `Route priority` in https://starlette.dev/routing/)
 
-        # The `/client/editics` is *only* available from the editics domain (and
-        # hence never available if `backend.config.editics_server_addr` is `None`).
-        # And, conversely, other `/client/*` routes are not allowed from the editics domain.
+        # The `/client/editics` is *only* available from the editics domains
+        # (and hence never available if editics is disabled.
+        # And, conversely, other `/client/*` routes are not allowed from the editics domains.
         def _with_editics_isolation(app: ASGIApp, mount_path: str) -> ASGIApp:
             return EditicsHostIsolationMiddleware(app, mount_path=mount_path, config=backend.config)
 

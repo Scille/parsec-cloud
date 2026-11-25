@@ -13,7 +13,14 @@ import anyio
 from anyio import BrokenResourceError, ClosedResourceError, WouldBlock
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import DeviceID, OrganizationID, RealmRole, UserID, VlobID
+from parsec._parsec import (
+    DeviceID,
+    OrganizationID,
+    RealmRole,
+    UserID,
+    VlobID,
+    editics_compute_sharding_index,
+)
 from parsec.components.auth import EditicsAuthInfo
 from parsec.components.events import EventBus
 from parsec.config import BackendConfig
@@ -642,6 +649,23 @@ class EditicsComponent:
         self._document_sessions: dict[
             tuple[OrganizationID, VlobID, VlobID], EditicsDocumentSession
         ] = {}
+        # Editics document sessions are dispatched across the editics server
+        # instances using a sharding algorithm:
+        # - Each editics server instance must have the same configuration (so all
+        #   servers must be updated&restarted whenever the configuration changes).
+        # - Servers are ordered in a list, then we run:
+        #
+        #         server_index = hash(orgID + realmID + docID) % len(servers)
+        #
+        # Note the URL list must be sorted the same way as the one provided to
+        # the clients in `events_listen`'s `OrganizationConfig` event, since both
+        # the client and the server run the sharding algorithm on it.
+        self._server_sharding_netlocs = tuple(
+            netloc.lower()  # Netloc is case-insensitive
+            for (_, netloc) in sorted(
+                (addr.to_http_url(), addr.netloc) for addr in config.editics_server_addrs
+            )
+        )
         self._event_bus.connect(self._on_event)
         # Note we don't have a `__del__` to disconnect from the event bus: the lifetime
         # of this component is basically equivalent of the one of the event bus anyway
@@ -706,6 +730,26 @@ class EditicsComponent:
 
             case _:
                 pass
+
+    def get_sharding_netloc_for_document(
+        self, organization_id: OrganizationID, realm_id: VlobID, document_id: VlobID
+    ) -> str | None:
+        """
+        Return the netloc (e.g. `editics0.parsec.cloud`) of the editics server
+        instance hosting this document session.
+        `None` if editics is disabled (and hence no server instance hosts it).
+        """
+        match len(self._server_sharding_netlocs):
+            case 0:  # Editics disabled
+                return None
+            case 1:  # Single editics server: no sharding
+                return self._server_sharding_netlocs[0]
+            case server_urls_count:  # Multiple editics servers: run the sharding algorithm
+                return self._server_sharding_netlocs[
+                    editics_compute_sharding_index(
+                        server_urls_count, organization_id, realm_id, document_id
+                    )
+                ]
 
     def _get_or_create_session(
         self,

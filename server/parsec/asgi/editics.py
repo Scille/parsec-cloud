@@ -165,6 +165,9 @@ class EditicsHttpStatus(Enum):
     UserFrozen = 462
     UserNoRealmRole = 463
     RealmArchived = 464
+    # Each document belongs to a single editics server instance, the client tries
+    # to join a document session by connecting to the wrong editics server instance.
+    BadEditicsServerInstance = 465
     TokenExpired = 498
 
     # Post-authentication, editics workflow errors
@@ -358,7 +361,33 @@ async def _editics_auth_or_abort(
     except ValueError:
         _editics_abort(EditicsHttpStatus.BadAuthenticationInfo, settled_api_version)
 
-    # 3) Parse authorization header
+    # 3) Check the request is addressed to the editics server instance hosting
+    # the document session
+
+    # A given document session can only exist in a single editics server instance,
+    # which the client determines by running the same sharding algorithm we use
+    # here.
+    # Notes:
+    # - If editics is disabled then the request is always rejected.
+    # - The instance the client is talking to is defined by the `Host` header.
+    # - We don't use the `X-Forwarded-Host` header since uvicorn doesn't secure it
+    #   yet (see https://github.com/Kludex/uvicorn/pull/2928).
+    # - In production we should run behind a reverse proxy that takes care of
+    #   sanitizing the `Host` header (while still preserving it!).
+    # - Without reverse proxy, a malicious client could bypass this check by sending
+    #   a request to server instance X's IP address while sending a `Host` header
+    #   with server instance Y's netloc.
+    #   This is considered acceptable since 1. the client must be authenticated,
+    #   2. other clients cannot be tricked into joining this document session, and
+    #   3. clients control the document ID and hence can already create arbitrary
+    #   document session in any server instance.
+    expected_netloc = backend.editics.get_sharding_netloc_for_document(
+        organization_id, realm_id, document_id
+    )
+    if expected_netloc is None or request.headers.get("host", "").lower() != expected_netloc:
+        _editics_abort(EditicsHttpStatus.BadEditicsServerInstance, settled_api_version)
+
+    # 4) Parse authorization header
 
     try:
         raw_authorization = request.headers["Authorization"]
@@ -382,7 +411,7 @@ async def _editics_auth_or_abort(
     except ValueError:
         _editics_abort(EditicsHttpStatus.MissingAuthenticationInfo, settled_api_version)
 
-    # 4) Actual auth lookup
+    # 5) Actual auth lookup
 
     outcome = await backend.auth.editics_auth(
         now=DateTime.now(),

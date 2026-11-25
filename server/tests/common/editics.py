@@ -27,7 +27,7 @@ from parsec.editics_protocol import (
     EditicsServerEventAdapter,
     EditicsServerEventParsecInitialContentUploaded,
 )
-from tests.common.backend import SERVER_DOMAIN
+from tests.common.backend import Backend
 from tests.common.client import AuthenticatedRpcClient, CoolorgRpcClients, RpcTransportError
 
 type EditicsSessionSendClientEvent = Callable[[EditicsClientEvent], Awaitable[BaseModel | None]]
@@ -68,10 +68,12 @@ class EditicsSessionClient:
 
     def __init__(
         self,
+        backend: Backend,
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
         participant_session_id: EditicsParticipantSessionID | None = None,
+        server_url: str | None = None,
     ):
         self.raw_client = who.raw_client
         self.realm_id = realm_id
@@ -85,9 +87,16 @@ class EditicsSessionClient:
         )
         authorization = f"Bearer {token.decode()}"
 
+        if server_url is None:
+            netloc = backend.editics.get_sharding_netloc_for_document(
+                who.organization_id, realm_id, document_id
+            )
+            assert netloc is not None
+            server_url = f"http://{netloc}"
+
         # `base_url`/`base_params`/`base_headers` are public so the tests can
         # easily craft their own raw requests toward the editics routes.
-        self.base_url = f"http://{SERVER_DOMAIN}/authenticated/{who.organization_id}/editics/{realm_id.hex}/{document_id.hex}"
+        self.base_url = f"{server_url.rstrip('/')}/authenticated/{who.organization_id}/editics/{realm_id.hex}/{document_id.hex}"
         self.base_params = {"psid": participant_session_id or uuid4().hex}
         self.base_headers = {
             "Authorization": authorization,
@@ -330,6 +339,7 @@ class EditicsJSRuntime:
     @asynccontextmanager
     async def new_client(
         self,
+        backend: Backend,
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
@@ -418,6 +428,7 @@ class EditicsJSRuntime:
         )
         client = EditicsJSClient(
             js_runtime=self,
+            backend=backend,
             who=who,
             realm_id=realm_id,
             document_id=document_id,
@@ -479,6 +490,7 @@ class EditicsJSClient:
     def __init__(
         self,
         js_runtime: EditicsJSRuntime,
+        backend: Backend,
         who: AuthenticatedRpcClient,
         realm_id: VlobID,
         document_id: VlobID,
@@ -488,6 +500,7 @@ class EditicsJSClient:
         self.who = who
         self.realm_id = realm_id
         self.document_id = document_id
+        self.backend = backend
         self.participant_session_id = participant_session_id
         self.editics_session_client: EditicsSessionClient | None = None
         self._listen_cm: AbstractAsyncContextManager[None] | None = None
@@ -500,6 +513,7 @@ class EditicsJSClient:
         assert not self.connected
 
         editics_session_client = EditicsSessionClient(
+            backend=self.backend,
             who=self.who,
             realm_id=self.realm_id,
             document_id=self.document_id,
@@ -610,8 +624,9 @@ EDITICS_DOCUMENT_ID = VlobID.from_hex("00000000000000000000000000000d0c")
 
 
 @pytest.fixture
-async def alice_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
+async def alice_editics(coolorg: CoolorgRpcClients, backend: Backend) -> EditicsSessionClient:
     return EditicsSessionClient(
+        backend=backend,
         who=coolorg.alice,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,
@@ -619,8 +634,9 @@ async def alice_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
 
 
 @pytest.fixture
-async def bob_editics(coolorg: CoolorgRpcClients) -> EditicsSessionClient:
+async def bob_editics(coolorg: CoolorgRpcClients, backend: Backend) -> EditicsSessionClient:
     return EditicsSessionClient(
+        backend=backend,
         who=coolorg.bob,
         realm_id=coolorg.wksp1_id,
         document_id=EDITICS_DOCUMENT_ID,

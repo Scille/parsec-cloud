@@ -273,6 +273,10 @@ class BaseEventsComponent:
             maxlen=config.sse_events_cache_size
         )
         self._event_bus.connect(self._on_event)
+        # Precompute those URLs since they will be used for each `EventOrganizationConfig` event
+        self._editics_server_urls = sorted(
+            addr.to_http_url() for addr in config.editics_server_addrs
+        )
         # Note we don't have a `__del__` to disconnect from the event bus: the lifetime
         # of this component is basically equivalent of the one of the event bus anyway
 

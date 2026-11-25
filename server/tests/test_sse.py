@@ -77,6 +77,7 @@ async def test_missed_events(minimalorg: MinimalorgRpcClients, backend: Backend)
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -116,6 +117,7 @@ async def test_close_on_backpressure(minimalorg: MinimalorgRpcClients, backend: 
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -164,6 +166,7 @@ async def test_empty_last_event_id(minimalorg: MinimalorgRpcClients, backend: Ba
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -224,6 +227,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -257,6 +261,7 @@ async def test_race_condition_between_connection_closure_and_event_dispatch(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
@@ -312,6 +317,7 @@ async def test_close_on_organization_tos_updated(
                 user_profile_outsider_allowed=True,
                 sse_keepalive_seconds=30,
                 realm_minimum_archiving_period_before_deletion=2592000,
+                editics_server_urls=[],
             )
         )
 
