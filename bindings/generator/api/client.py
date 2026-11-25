@@ -116,6 +116,7 @@ class ServerOrganizationConfig(Structure):
     user_profile_outsider_allowed: bool
     active_users_limit: ActiveUsersLimit
     realm_minimum_archiving_period_before_deletion: U64
+    editics_server_urls: list[str]
 
 
 class ClientInfo(Structure):
