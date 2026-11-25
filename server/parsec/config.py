@@ -330,7 +330,7 @@ class BackendConfig:
     # Small hack here: since the rate limit system is purely in-memory and configured
     # only by fields from this class, we instantiate here to simplify passing it
     # to the different components needing it.
-    email_rate_limit: EmailRateLimit = field(init=False)
+    email_rate_limit: EmailRateLimit = field(init=False, repr=False)
 
     # Random value used to make unpredictable (but still stable & realistic) the password
     # algorithm configuration returned for non-existing accounts, hence preventing an
@@ -376,7 +376,9 @@ class BackendConfig:
         """
         Provide a safe dictionary for logging the backend configuration.
         """
-        kwargs = {field.name: repr(getattr(self, field.name)) for field in fields(self)}
+        kwargs = {
+            field.name: repr(getattr(self, field.name)) for field in fields(self) if field.repr
+        }
         kwargs["administration_token"] = "***"
         kwargs["fake_account_password_algorithm_seed"] = "***"
         return kwargs
