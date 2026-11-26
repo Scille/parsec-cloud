@@ -21,8 +21,6 @@ postprocessors = [
     # Collapse consecutive blank lines (the template emits two between sections)
     { pattern = '\n?\n\n+', replace = "\n\n" },
 ]
-# render body even when there are no releases to process
-# render_always = true
 
 [git]
 # Parse commits according to the conventional commits specification.
