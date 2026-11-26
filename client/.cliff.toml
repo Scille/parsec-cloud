@@ -2,7 +2,6 @@
 # https://git-cliff.org/docs/configuration
 "$schema" = "https://www.schemastore.org/git-cliff.json"
 
-
 [changelog]
 # Used by `--prepend` to remove the previous header.
 header_marker = "<!-- git-cliff: end of header -->"
@@ -41,8 +40,7 @@ split_commits = false
 # NOTE: Some commits have multiple scopes (delimited by `,`), e.g.
 # `feat(libparsec, server): foo`. Since a changelog section is per-component,
 # we normalize the scope list to the first scope in the list that this
-# changelog covers, so the commit lands in the section of the CLI, libparsec
-# or Rust (instead of being filed under a bogus `libparsec,server` "scope").
+# changelog covers
 commit_preprocessors = [
     { pattern = '\(package-desktop\)', replace = '\(client/desktop\)' },
     { pattern = '\(package-\*\)', replace = '(client)' },
@@ -75,13 +73,13 @@ commit_parsers = [
 protect_breaking_commits = false
 # Exclude commits that are not matched by any commit parser.
 filter_commits = true
+# An array of link parsers for extracting external references, and turning them into URLs, using regex.
 link_parsers = [
     { pattern = '(?P<owner>\S+)/(?P<repo>\S+)#(?P<id>\d+)', href = "https://github.com/$owner/$repo/issues/$id" },
     { pattern = '\s#(\d+)', text = "#$1", href = "https://github.com/Scille/parsec-cloud/issues/$1" },
 ]
 # Fail on a commit that is not matched by any commit parser.
 fail_on_unmatched_commit = false
-# An array of link parsers for extracting external references, and turning them into URLs, using regex.
 # Include only the tags that belong to the current branch.
 use_branch_tags = false
 # Order releases topologically instead of chronologically.
