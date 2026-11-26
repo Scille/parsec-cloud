@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) AGPL-3.0-only 2016-present Scille SAS
 
-use std::{collections::HashMap, num::NonZeroU8};
+use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::{PerTopicLastTimestamps, UpTo};
@@ -217,7 +217,7 @@ async fn check_against_local_certificates(
 
 #[derive(Debug)]
 enum CreateShamirRecoveryDeviceOutcome {
-    Done(Box<LocalDevice>),
+    Done(Arc<LocalDevice>),
     RequireGreaterTimestamp(DateTime),
 }
 
@@ -262,7 +262,7 @@ async fn create_shamir_recovery_device(
         })
         .await?
     {
-        Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(Box::new(
+        Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(Arc::new(
             recovery_device,
         ))),
         Rep::RequireGreaterTimestamp {
