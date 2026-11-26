@@ -319,6 +319,7 @@ export type {
   WorkspaceDecryptEditicsError,
   WorkspaceDecryptPathAddrError,
   WorkspaceEditicsGenerateAuthTokenError,
+  WorkspaceEditicsPreparedDocumentSessionError,
   WorkspaceEncryptEditicsError,
   WorkspaceFdCloseError,
   WorkspaceFdReadError,
@@ -384,6 +385,7 @@ import type {
   UserProfile,
   UserX509CertificateDetails,
   VlobID,
+  WorkspaceEditicsPreparedDocumentSession,
   WorkspaceTimelineEntry,
   X509CertificateReference as X509CertificateReferenceType,
 } from '@/plugins/libparsec';
@@ -712,6 +714,7 @@ export {
   UserTimelineEntryRevoked,
   UserTimelineEntryTag,
   UserTuple,
+  WorkspaceEditicsPreparedDocumentSession,
   WorkspaceHandle,
   WorkspaceHistoryEntryStat,
   WorkspaceHistoryEntryStatFile,

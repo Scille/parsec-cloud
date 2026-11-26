@@ -8,19 +8,13 @@ import {
   editicsEncryptBatch,
   editicsGenerateAuthToken,
   EntryID,
-  entryStat,
-  FsPath,
-  getClientInfo,
   getUserInfoFromDeviceID,
-  getWorkspaceInfo,
   isElectron,
-  parseParsecAddr,
   WorkspaceHandle,
 } from '@/parsec';
 import { getWorkspaceHandle } from '@/router';
 import { Env } from '@/services/environment';
 import type {
-  EditicsCollaborativeOptions,
   EditicsDocumentTypes,
   EditicsHostToParentMessage,
   EditicsOpenOptions,
@@ -37,33 +31,49 @@ import type {
 import { modalController } from '@ionic/vue';
 import { MsModalResult } from 'megashark-lib';
 
-async function getEditicsOrigin(): Promise<string> {
+// Determines the origin from which the editics host page (i.e. the IFrame
+// running the editor) must be loaded, given the editics server hosting the
+// document's session (as provided by the server configuration through
+// `WorkspaceEditicsPreparedDocumentSession.editicsServerUrl`, `null` meaning
+// no editics server is available):
+// - Electron: the app itself hosts the editics pages, so the editics server is
+//   not needed (and in particular the offline mode works out of the box).
+// - Web dev mode: the Vite dev server hosts the editics pages (the editics
+//   server hosting the collaborative session is not even guaranteed to be
+//   serving web pages). This is fine given those pages have no
+//   Content-Security-Policy, and the testbed server hosting the collaborative
+//   session accepts requests from any origin.
+// - Web release mode: the editics server hosts the editics pages (both in
+//   collaborative and offline mode). This is required given those pages are
+//   served with a Content-Security-Policy only allowing network access to
+//   their own origin, and the server providing them must be the one hosting
+//   the collaborative session anyway.
+//
+// Returns `undefined` when editics cannot be used at all: the editics pages
+// cannot be fetched without an editics server in web release mode, not even
+// for the offline mode.
+export function getEditicsIframeOrigin(editicsServerUrl: string | null): string | undefined {
   // Page is served on a different origin for security reasons.
-  // Use this to filter the message we get.
+  // Use this origin to filter the messages we get.
   if (isElectron()) {
     // Using a custom scheme for Electron as it does count as a different origin
     // and provides a good isolation automatically.
     return 'parsec-editics://-';
   } else if (window.isDev()) {
     // Web dev mode
-
     if (window.location.host.startsWith('127.0.0.1')) {
       // `editics.127.0.0.1` is not a valid host, must force the use of localhost instead!
       return `${window.location.protocol}//editics.${window.location.host.replace('127.0.0.1', 'localhost')}`;
     } else {
       return `${window.location.protocol}//editics.${window.location.host}`;
     }
+  } else if (editicsServerUrl !== null) {
+    // Web release mode: the editics server hosting the document's session also
+    // hosts the editics pages.
+    return editicsServerUrl;
   } else {
-    // Web release mode
-
-    // Just add a prefix (e.g. `app.parsec.cloud` -> `editics.app.parsec.cloud`).
-    // This would fail if the host is an IP address, but this is highly unlikely
-    // in release since a website is expected to always be accessed by its hostname.
-    // TODO: when collaborative mode is available, we should modify this to use the
-    // address of the editics server here (and, since we are in web, if the editics
-    // server cannot be joined we error out instead of going in offline mode, as
-    // fetching `editics/index.html` would most likely fail anyway).
-    return `${window.location.protocol}//editics.${window.location.host}`;
+    // Web release mode without any editics server: editics cannot be used at all
+    return undefined;
   }
 }
 
@@ -249,9 +259,13 @@ export async function openDocument(
 
   let session: EditicsHostSession | undefined = undefined;
 
+  // Note: the editics server to use must have been determined beforehand by
+  // the caller (see `getEditicsIframeOrigin`), given in web release mode the
+  // editics host page is fetched from the editics server hosting the
+  // collaborative session.
   let frameUrl: URL;
   try {
-    frameUrl = getEditicsFrameUrl(await getEditicsOrigin());
+    frameUrl = getEditicsFrameUrl(options.editicsIframeOrigin);
   } catch (e: unknown) {
     handlers.onError(new EditicsError(EditicsErrorCodes.FrameLoadFailed, String(e)));
     return undefined;
@@ -266,7 +280,9 @@ export async function openDocument(
   // - In Electron, the Editics page is served by the main process, so we need
   //   to register the allowed server origin.
   if (options.collaborative !== undefined && isElectron()) {
-    await window.nativeAPI.declareEditicsServerOriginForCsp(options.collaborative.serverUrl);
+    // Note: a bare origin is expected here (the CSP does not support a path,
+    // and the server URL may carry a trailing `/`).
+    await window.nativeAPI.declareEditicsServerOriginForCsp(new URL(options.collaborative.serverUrl).origin);
   }
 
   try {
@@ -635,56 +651,4 @@ async function selectImage(options: { workspaceHandle: WorkspaceHandle }): Promi
   const { data, role } = await modal.onWillDismiss();
   await modal.dismiss();
   return role === MsModalResult.Confirm ? (data as { name: string; content: Uint8Array }) : null;
-}
-
-// TODO: Editics server URL should be provided by the server through a (soon to be
-//       developed!) dedicated API. Once available, this code is no longer needed.
-async function getEditicsSessionServerUrl(organizationAddr: string): Promise<string | undefined> {
-  const parsedAddr = await parseParsecAddr(organizationAddr);
-  if (!parsedAddr.ok) {
-    onlyOfficeLog('warn', `Failed to parse the organization address '${organizationAddr}'`);
-    return undefined;
-  }
-  const { hostname, port, isDefaultPort, useSsl } = parsedAddr.value;
-  return `${useSsl ? 'https' : 'http'}://${hostname}${isDefaultPort ? '' : `:${port}`}`;
-}
-
-export async function getEditicsCollaborativeOptions(
-  workspaceHandle: WorkspaceHandle,
-  path: FsPath,
-): Promise<EditicsCollaborativeOptions | undefined> {
-  const clientInfo = await getClientInfo();
-  if (!clientInfo.ok) {
-    onlyOfficeLog('warn', `Cannot get the client info: ${JSON.stringify(clientInfo.error)}`);
-    return undefined;
-  }
-
-  const serverUrl = await getEditicsSessionServerUrl(clientInfo.value.organizationAddr);
-  if (serverUrl === undefined) {
-    onlyOfficeLog('warn', 'Cannot resolve the editics server URL, falling back on the offline mode');
-    return undefined;
-  }
-
-  const [workspaceInfo, entry] = await Promise.all([getWorkspaceInfo(workspaceHandle), entryStat(workspaceHandle, path)]);
-  if (!workspaceInfo.ok) {
-    onlyOfficeLog('warn', `Cannot get the workspace info: ${JSON.stringify(workspaceInfo.error)}`);
-    return undefined;
-  }
-  if (!entry.ok || !entry.value.isFile()) {
-    onlyOfficeLog('warn', `Cannot stat the document being opened: ${JSON.stringify(entry.ok ? undefined : entry.error)}`);
-    return undefined;
-  }
-
-  // Collaborative edition is not possible in an archived workspace since it is read-only
-  if (workspaceInfo.value.isArchived) {
-    onlyOfficeLog('info', 'The workspace is archived, falling back on the offline mode');
-    return undefined;
-  }
-
-  return {
-    serverUrl,
-    organizationId: clientInfo.value.organizationId,
-    realmId: workspaceInfo.value.id,
-    documentId: entry.value.id,
-  };
 }

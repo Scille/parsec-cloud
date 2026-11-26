@@ -68,15 +68,24 @@
 
 <script setup lang="ts">
 import { getFileContent } from '@/common/file';
-import { ClientInfo, closeFile, getClientInfo, getWorkspaceInfo, openFile, WorkspaceHandle, writeFile } from '@/parsec';
+import {
+  ClientInfo,
+  closeFile,
+  editicsPrepareDocumentSession,
+  getClientInfo,
+  getWorkspaceInfo,
+  openFile,
+  WorkspaceHandle,
+  writeFile,
+} from '@/parsec';
 import { currentRouteIs, getFileHandlerMode, getWorkspaceHandle, routerGoBack, Routes } from '@/router';
 import {
   EditicsError,
   EditicsErrorCodes,
   EditicsHostSession,
   EditicsSaveState,
-  getEditicsCollaborativeOptions,
   getEditicsDocumentType,
+  getEditicsIframeOrigin,
   openDocument,
 } from '@/services/editics';
 import { Env } from '@/services/environment';
@@ -246,6 +255,21 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
     session = undefined;
   }
 
+  const preparedSession = await editicsPrepareDocumentSession(workspaceHandle, contentInfo.path);
+  if (!preparedSession.ok) {
+    window.nativeAPI.log('error', `Cannot prepare the editics document session: ${JSON.stringify(preparedSession.error)}`);
+    emits('fileError');
+    return;
+  }
+  const editicsServerUrl = preparedSession.value.editicsServerUrl;
+
+  const editicsIframeOrigin = getEditicsIframeOrigin(editicsServerUrl);
+  if (editicsIframeOrigin === undefined) {
+    window.nativeAPI.log('error', 'Editics: no editics server available, cannot open the document');
+    emits('fileError');
+    return;
+  }
+
   // Collaborative edition is the default, but it needs the editics server to be
   // online: when it isn't, we let the user choose between going back or editing offline.
   // The offline-only mode (i.e. not as a fallback) is used for:
@@ -254,15 +278,10 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
   // The offline-only mode can also be forced through the `PARSEC_APP_EDITICS_MODE`
   // environment variable (in which case no dialog is shown).
   let collaborative: EditicsCollaborativeOptions | undefined = undefined;
-  if (Env.getEditicsMode() === 'collaborative') {
-    if (contentInfo.timestamp) {
-      // Older version of a file should under no condition be opened in collaborative
-      // mode as it would conflict with other clients trying to open the current
-      // version of the file!
-      window.nativeAPI.log('info', 'Editics: workspace history, opening the document in offline mode');
-    }
-    const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
-    if (workspaceInfoResult.ok && workspaceInfoResult.value.isArchived) {
+  const workspaceInfoResult = await getWorkspaceInfo(workspaceHandle);
+  const isArchived = workspaceInfoResult.ok && workspaceInfoResult.value.isArchived;
+  if (Env.getEditicsMode() === 'collaborative' && !contentInfo.timestamp) {
+    if (isArchived) {
       // File from archived workspace could in theory be opened in collaborative
       // mode, however there is not much to gain from it since only viewers are
       // allowed.
@@ -275,15 +294,24 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
           await routerGoBack();
           return;
         }
+      } else if (editicsServerUrl === null) {
+        // Fall back on the offline mode (no editics server provided by the
+        // server configuration, hence editics is disabled server-side).
+        window.nativeAPI.log('warn', 'Editics: no editics server configured on the server, falling back on the offline mode');
       } else {
-        collaborative = await getEditicsCollaborativeOptions(workspaceHandle, contentInfo.path);
-        if (!collaborative) {
-          // Fall back on the offline mode (editics server not available, ...).
-          // Note the archived workspace case is handled above.
-          window.nativeAPI.log('warn', 'Editics: falling back on the offline mode');
-        }
+        collaborative = {
+          serverUrl: editicsServerUrl,
+          organizationId: preparedSession.value.organizationId,
+          realmId: preparedSession.value.realmId,
+          documentId: preparedSession.value.documentId,
+        };
       }
     }
+  } else if (contentInfo.timestamp) {
+    // Older version of a file should under no condition be opened in collaborative
+    // mode as it would conflict with other clients trying to open the current
+    // version of the file!
+    window.nativeAPI.log('info', 'Editics: workspace history, opening the document in offline mode');
   }
 
   session = await openDocument(
@@ -297,6 +325,7 @@ async function loadEditor(documentType: EditicsDocumentTypes): Promise<void> {
       locale: longLocaleCodeToShort(I18n.getLocale()),
       theme: getEditorTheme(),
       collaborative,
+      editicsIframeOrigin,
     },
     // Content is loaded lazily by the host frame request; if it fails,
     // the error flows back as `oo-event-error` -> onError.
