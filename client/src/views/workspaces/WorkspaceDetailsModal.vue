@@ -67,7 +67,10 @@
           </ul>
           <technical-id :id="workspace.id" />
         </div>
-        <div class="workspace-section">
+        <div
+          v-if="workspace.selfRole === WorkspaceRole.Owner"
+          class="workspace-section"
+        >
           <ion-text class="workspace-section__title">{{ $msTranslate('export.exportWorkspaceTitle') }}</ion-text>
           <div class="workspace-export">
             <ion-text class="workspace-export__description">
@@ -76,7 +79,6 @@
             <ion-button
               class="workspace-export__button"
               @click="downloadWorkspaceExport"
-              v-show="workspace.selfRole === WorkspaceRole.Owner"
               fill="clear"
             >
               {{ $msTranslate('export.exportWorkspace') }}

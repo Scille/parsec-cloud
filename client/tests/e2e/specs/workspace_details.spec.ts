@@ -67,7 +67,11 @@ for (const { role, rights } of ROLES) {
     await expect(modal.locator('.workspace-info-item__role')).toHaveText(role);
     await expect(modal.locator('.workspace-rights-item__text')).toHaveText([...rights]);
     await expect(modal.locator('.label-id')).toHaveText(/^(Internal ID: )[a-f0-9-]+$/);
-    await expect(modal.locator('.workspace-section__title').nth(1)).toHaveText('Export data');
+    if (role === 'Owner') {
+      await expect(modal.locator('.workspace-section__title').nth(1)).toHaveText('Export data');
+    } else {
+      await expect(modal.locator('.workspace-section__title')).toHaveCount(1);
+    }
 
     await modal.locator('.closeBtn').click();
     await expect(modal).toBeHidden();
