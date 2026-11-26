@@ -92,6 +92,7 @@ sort_commits = "oldest"
 recurse_submodules = false
 
 # FIXME: Slow down a lot `git-cliff` on this repo (15sec each time)
+# https://github.com/orhun/git-cliff/issues/1619
 # [remote.github]
 # owner = "Scille"
 # repo = "parsec-cloud"
