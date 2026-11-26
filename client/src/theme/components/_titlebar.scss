@@ -39,4 +39,6 @@
   .homepage-header .topbar-right {
     margin-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
   }
+
+  --side-popover-top: env(titlebar-area-height, 40px);
 }

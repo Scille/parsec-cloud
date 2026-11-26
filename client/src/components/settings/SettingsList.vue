@@ -95,7 +95,10 @@
           title="SettingsModal.configDir.label"
           description="SettingsModal.configDir.description"
         >
-          <ion-button @click="openConfigDir">
+          <ion-button
+            @click="openConfigDir"
+            fill="clear"
+          >
             {{ $msTranslate('SettingsModal.configDir.open') }}
           </ion-button>
         </settings-option>
