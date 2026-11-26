@@ -205,10 +205,8 @@ export class EditicsSessionFatalError extends Error {
 
 // The HTTP statuses that mean the session cannot work and will never work
 // again no matter how much we retry (see `EditicsHttpStatus` in
-// `server/parsec/asgi/editics.py`): the token we present is refused
-// (missing/malformed/wrong scope/scenario), or the organization/user/realm
-// state forbids us. Contrast with the transport errors (retried) and the
-// token expiry (refreshed, see `editicsFetch`).
+// `server/parsec/asgi/editics.py`).
+// Contrast with the transport errors (retried) and the token expiry (refreshed).
 const FATAL_HTTP_STATUSES = new Set<number>([
   401, // MissingAuthenticationInfo
   403, // BadAuthenticationInfo
@@ -217,6 +215,7 @@ const FATAL_HTTP_STATUSES = new Set<number>([
   462, // UserFrozen
   463, // UserNoRealmRole
   464, // RealmArchived
+  465, // BadEditicsServerInstance
 ]);
 
 function logError(message: string, error?: unknown): void {
@@ -1003,7 +1002,11 @@ export class CollaborativeEditicsServer implements OO.MockServer {
 
   private get sessionBasePath(): string {
     const { serverUrl, organizationId, realmId: workspaceId, documentId: vlobId } = this.collaborativeOptions;
-    return `${serverUrl}/authenticated/${encodeURIComponent(organizationId)}/editics/${workspaceId}/${vlobId}`;
+    // Safe check: the server URL comes from the server configuration (as an
+    // http URL, see `ParsecAddr::to_http_url`), and hence may carry a trailing `/`
+    // (e.g. `https://editics.app.parsec.cloud/`).
+    const bareServerUrl = serverUrl.replace(/\/+$/, '');
+    return `${bareServerUrl}/authenticated/${encodeURIComponent(organizationId)}/editics/${workspaceId}/${vlobId}`;
   }
 
   private get listenUrl(): string {

@@ -35,6 +35,8 @@ import {
   WorkspaceDecryptEditicsError,
   WorkspaceDecryptPathAddrError,
   WorkspaceEditicsGenerateAuthTokenError,
+  WorkspaceEditicsPreparedDocumentSession,
+  WorkspaceEditicsPreparedDocumentSessionError,
   WorkspaceEncryptEditicsError,
   WorkspaceGeneratePathAddrError,
   WorkspaceHandle,
@@ -520,6 +522,13 @@ export async function editicsGenerateAuthToken(
   documentId: EntryID,
 ): Promise<Result<string, WorkspaceEditicsGenerateAuthTokenError>> {
   return await libparsec.workspaceEditicsGenerateAuthToken(workspaceHandle, documentId);
+}
+
+export async function editicsPrepareDocumentSession(
+  workspaceHandle: WorkspaceHandle,
+  path: FsPath,
+): Promise<Result<WorkspaceEditicsPreparedDocumentSession, WorkspaceEditicsPreparedDocumentSessionError>> {
+  return await libparsec.workspaceEditicsPrepareDocumentSession(workspaceHandle, path);
 }
 
 export async function editicsEncryptBatch(

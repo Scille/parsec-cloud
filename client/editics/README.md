@@ -54,17 +54,23 @@ The whole system is a stack of three nested windows:
 The host page should always be served from a different origin than the Parsec GUI
 parent page, so the OnlyOffice editor it contains is sandboxed away from the
 app's data (e.g. `libparsec`, its storage and its credentials). The exact
-origin depends on how the app is deployed (see `getEditicsOrigin` in
+origin depends on how the app is deployed (see `getEditicsIframeOrigin` in
 `src/services/editics.ts`):
 
-| Deployment                   | Parent page origin             | Host page origin                                                             |
-| ---------------------------- | ------------------------------ | ---------------------------------------------------------------------------- |
-| Electron                     | `parsec-desktop://-`           | `parsec-editics://-`                                                         |
-| Web dev (Vite dev server)    | `http://localhost:8080`        | `http://editics.localhost:8080`                                              |
-| Web release with `serverUrl` | e.g. `https://app.example.com` | `serverUrl` used as-is, e.g. `https://editics0.example.com`                  |
-| Web release without prefix   | e.g. `https://app.example.com` | `editics.` always used as the prefix, e.g. `https://editics.app.example.com` |
+| Deployment                | Parent page origin             | Host page origin                                                                       |
+| ------------------------- | ------------------------------ | -------------------------------------------------------------------------------------- |
+| Electron                  | `parsec-desktop://-`           | `parsec-editics://-`                                                                   |
+| Web dev (Vite dev server) | `http://localhost:8080`        | `http://editics.localhost:8080`                                                        |
+| Web release               | e.g. `https://app.example.com` | the editics server hosting the document's session, e.g. `https://editics0.example.com` |
 
 Electron uses a custom scheme for editics (`parsec-editics:`) as it ensures a high level of isolation automatically.
+
+In web release mode the host page is always fetched from the editics server
+hosting the document's collaborative session: the editics pages are served
+with a Content-Security-Policy only allowing them to connect to their own
+origin. Hence editics cannot be used at all in web release mode if no editics
+server is available (not even in offline mode), unlike on Electron where the
+app itself provides the editics pages.
 
 ## Packaging (see `vite.config.ts`)
 

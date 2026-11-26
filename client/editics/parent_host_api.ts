@@ -19,8 +19,9 @@ export type EditicsDocumentTypes = 'word' | 'cell' | 'slide' | 'pdf';
 export type EditicsOpenModes = 'view' | 'edit';
 
 export interface EditicsCollaborativeOptions {
-  // Base URL of the Parsec server hosting the session, without a trailing slash
-  // (e.g. https://editics.app.parsec.cloud).
+  // Base URL of the Parsec server hosting the session (e.g. https://editics.app.parsec.cloud/).
+  // As provided by the server configuration (through `ParsecAddr::to_http_url`),
+  // the URL may carry a trailing `/`.
   serverUrl: string;
   organizationId: string;
   realmId: string;
@@ -44,6 +45,13 @@ export interface EditicsOpenOptions {
   locale: string;
   theme: 'light' | 'dark';
   collaborative?: EditicsCollaborativeOptions;
+  // Origin used by the parent to load the editics host page in its IFrame:
+  // - `parsec-editics://-` on Electron (i.e. the app itself hosts the page)
+  // - on web, the origin serving the editics pages: e.g.
+  //   `https://editics.localhost:8080/` in dev mode (i.e. the Vite dev server),
+  //   or `https://editics.parsec.cloud/` in release mode (i.e. the editics server
+  //   hosting the document's collaborative session).
+  editicsIframeOrigin: string;
 }
 
 // Replied to `oo-rpc-save` by the parent, and to `oo-rpc-request-save` by the
