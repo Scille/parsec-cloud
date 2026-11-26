@@ -41,7 +41,7 @@ But if you just want to deploy a Parsec server locally you can do it with the fo
 
 .. code-block:: bash
 
-   git clone --depth 1 --branch v3.12.0-a.2+dev https://github.com/Scille/parsec-cloud.git
+   git clone --depth 1 --branch v3.12.0-a.2 https://github.com/Scille/parsec-cloud.git
    cd parsec-cloud/docs/hosting/deployment
    bash setup-tls.sh
    bash gen-secrets.sh
@@ -369,7 +369,7 @@ Installation
 
    .. code-block:: bash
 
-     python -m pip install 'parsec-cloud==3.12.0-a.2+dev'
+     python -m pip install 'parsec-cloud==3.12.0-a.2'
 
 #. Apply database migrations:
 
