@@ -151,6 +151,7 @@ async function onLoginSSOClick(provider: OpenBaoAuthConfig): Promise<void> {
   if (props.loginInProgress || !serverConfig.value?.openbao || connectingToProvider.value) {
     return;
   }
+  errorMessage.value = '';
 
   try {
     connectingToProvider.value = provider.id;
@@ -209,7 +210,16 @@ async function setLoginError(error: ClientStartError): Promise<void> {
       window.nativeAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.unknownError';
       break;
+    case ClientStartErrorTag.LoadDeviceRemoteOpaqueKeyFetchFailed:
+    case ClientStartErrorTag.LoadDeviceRemoteOpaqueKeyFetchOffline:
+      errorMessage.value = 'HomePage.loginErrors.openBaoFailed';
+      break;
+    default:
+      errorMessage.value = 'HomePage.organizationLogin.unknownError';
+      break;
   }
+  connectedToProvider.value = undefined;
+  connectingToProvider.value = undefined;
   passwordIsInvalid.value = true;
 }
 

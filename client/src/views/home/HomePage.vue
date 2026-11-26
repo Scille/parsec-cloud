@@ -807,13 +807,9 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     }
   } else if (device.ty.tag === AvailableDeviceTypeTag.OpenBao) {
     window.nativeAPI.log('error', `Failed to login with OpenBAO: ${error.tag} (${error.error})`);
-    informationManager.present(
-      new Information({
-        message: 'HomePage.loginErrors.openBaoFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+    if (loginPageRef.value) {
+      loginPageRef.value.setLoginError(error);
+    }
   } else if (device.ty.tag === AvailableDeviceTypeTag.PKI) {
     window.nativeAPI.log('error', `Failed to login with PKI: ${error.tag} (${error.error})`);
     informationManager.present(
