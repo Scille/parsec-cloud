@@ -77,20 +77,10 @@ pub(crate) async fn workspace_history_ops_with_realm_export_access_factory(
 
     // Retrieve the realm export database
 
-    let exe = std::env::current_exe().unwrap();
-    let mut path = exe.as_path();
-    let original_export_db_path = loop {
-        path = match path.parent() {
-            None => panic!(
-                "Cannot find `{relative_original_export_db_path:?}` while crawling up from `{exe:?}`"
-            ),
-            Some(path) => path,
-        };
-        let candidate = path.join(relative_original_export_db_path);
-        if candidate.exists() {
-            break candidate;
-        }
-    };
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+    let original_export_db_path = Path::new(&manifest_dir)
+        .join("../../..") // repo root
+        .join(relative_original_export_db_path);
 
     // Copy the realm export database since SQLite modifies the file in place
     // even when only doing read operations.
