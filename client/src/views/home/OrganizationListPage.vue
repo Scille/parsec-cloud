@@ -465,12 +465,9 @@ const sortedDevices = computed(() => {
     display: flex;
     flex-direction: column;
     background: ms.color('surface-base-default');
+    border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
     border-radius: ms.radius('3xl');
     overflow: hidden;
-
-    .organization-content--columns & {
-      border: ms.border('thin') solid ms.color('border-neutral-default-subtle');
-    }
   }
 }
 

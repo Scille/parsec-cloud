@@ -625,12 +625,22 @@ async function logout(): Promise<void> {
 
 <style lang="scss" scoped>
 .side-popover-menu {
-  --width: 25rem;
+  --side-popover-inset: #{ms.spacing('padding-3xl')};
+  --width: calc(25rem + var(--side-popover-inset));
   --max-width: 90vw;
+  --background: transparent;
 
   &::part(container) {
-    border-radius: ms.radius('2xl') 0 0 ms.radius('2xl');
+    box-sizing: border-box;
+    padding: calc(var(--side-popover-top, 0px) + var(--side-popover-inset)) var(--side-popover-inset) var(--side-popover-inset) 0;
+    box-shadow: none;
+    contain: size layout style;
+  }
+
+  ion-content {
+    border-radius: ms.radius('2xl');
     box-shadow: ms.shadow('elevation-lg');
+    overflow: hidden;
   }
 }
 </style>
