@@ -37,7 +37,7 @@ def ssl_conf(request: pytest.FixtureRequest) -> Generator[SSLConf, None, None]:
         yield SSLConf()
     else:
         ca = trustme.CA()
-        server_cert = ca.issue_cert("127.0.0.1")
+        server_cert = ca.issue_cert("parsec.localhost")
         with (
             ca.cert_pem.tempfile() as ca_certfile,
             server_cert.cert_chain_pems[0].tempfile() as server_certfile,
@@ -65,7 +65,7 @@ def test_run(coolorg: CoolorgRpcClients, unused_tcp_port: int, tmp_path: Path, s
             f"run --db=MOCKED --blockstore=MOCKED"
             f" --administration-token={administration_token}"
             f" --port={unused_tcp_port}"
-            f" --server-addr=parsec3://127.0.0.1:{unused_tcp_port}"
+            f" --server-addr=parsec3://parsec.localhost:{unused_tcp_port}"
             f" --email-host=MOCKED"
             f" --log-level=INFO"
             f" --fake-account-password-algorithm-seed=F4k3"
@@ -85,7 +85,7 @@ def test_run(coolorg: CoolorgRpcClients, unused_tcp_port: int, tmp_path: Path, s
         while True:
             try:
                 rep = urlopen(
-                    f"{scheme}://127.0.0.1:{unused_tcp_port}/", context=client_ssl_context
+                    f"{scheme}://parsec.localhost:{unused_tcp_port}/", context=client_ssl_context
                 )
             except URLError:
                 # Connection refused might be due to the server not quiet ready yet...
@@ -111,7 +111,7 @@ async def test_run_conflicting_scws_pkey_opts(
 ):
     runner = CliRunner()
     env = {}
-    cmd = f"run --dev --port={unused_tcp_port} --host=127.0.0.1"
+    cmd = f"run --dev --port={unused_tcp_port} --host=parsec.localhost"
     test_key = anyio.Path("test.key")
 
     match pass_pkey_content_as:
