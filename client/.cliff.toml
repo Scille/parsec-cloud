@@ -55,16 +55,15 @@ commit_preprocessors = [
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
 commit_parsers = [
     { field = "scope", pattern = '^client$', scope = "<!-- 0 -->🌐 Application", continue = true },
-    { field = "scope", pattern = '^client/web$', scope = "<!-- 1 -->🌐 Web specific", continue = true },
-    { field = "scope", pattern = '^client/desktop$', scope = "<!-- 1 -->🖥️ Desktop specific", continue = true },
+    { field = "scope", pattern = '^client/web$', scope = "<!-- 1 -->🌐 Web Specific", continue = true },
+    { field = "scope", pattern = '^client/desktop$', scope = "<!-- 1 -->🖥️ Desktop Specific", continue = true },
     { message = '^feat\((?:(?:client(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
     { message = '^fix\((?:(?:client(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
     { message = '^docs\((?:(?:client(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
     { message = '^perf\((?:(?:client(?:/\w+)?))\)', group = "<!-- 4 -->⚡ Performance" },
     { message = '^refactor\((?:(?:client(?:/\w+)?))\)', group = "<!-- 2 -->🚜 Refactor" },
     { message = '^style\((?:(?:client(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
-    { message = '^test\((?:(?:client(?:/\w+)?))\)', group = "<!-- 6 -->🧪 Testing" },
-    { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
+    { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Internal Changes" },
     { message = '^revert\((?:(?:client(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
     # Any other type (e.g. `build`) scoped `client`/`rust`/`libparsec`
     { message = '^[a-z]+\((?:(?:client(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
