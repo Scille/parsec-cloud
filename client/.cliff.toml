@@ -24,8 +24,6 @@ postprocessors = [
 ]
 # render body even when there are no releases to process
 # render_always = true
-# output file path
-# output = "test.md"
 
 [git]
 # Parse commits according to the conventional commits specification.
@@ -46,43 +44,30 @@ split_commits = false
 # changelog covers, so the commit lands in the section of the CLI, libparsec
 # or Rust (instead of being filed under a bogus `libparsec,server` "scope").
 commit_preprocessors = [
-    # Replace issue numbers with link templates to be updated in `changelog.postprocessors`.
-    #{ pattern = '\((\w+\s)?#([0-9]+)\)', replace = "([#${2}](<REPO>/issues/${2}))"},
-    # `feat(cli, server): foo` -> `feat(cli): foo`
-    # `feat(server, rust): foo` -> `feat(rust): foo`
-    # `feat(libparsec, server): foo` -> `feat(libparsec): foo`
-    { pattern = 'package-desktop', replace = 'client/desktop' },
-    { pattern = 'package-\*', replace = 'client' },
-    { pattern = '^(?P<type>[a-z]+)\((?:\s*[^,)]+,)*\s*(?P<scope>(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))(?:\s*,\s*[^)]*)?\)', replace = "$type($scope)" },
-    # Check spelling of the commit message using https://github.com/crate-ci/typos.
-    # If the spelling is incorrect, it will be fix automatically.
-    #{ pattern = '.*', replace_command = 'typos --write-changes -' },
+    { pattern = '\(package-desktop\)', replace = '\(client/desktop\)' },
+    { pattern = '\(package-\*\)', replace = '(client)' },
+    { pattern = '\(web\)', replace = '(client/web)' },
+    # `feat(client, server): foo` -> `feat(client): foo`
+    # `feat(server, client): foo` -> `feat(client): foo`
+    { pattern = '^(?P<type>[a-z]+)\((?:\s*[^,)]+,)*\s*(?P<scope>client(?:/\w+)?)(?:\s*,\s*[^)]*)?\)', replace = "$type($scope)" },
 ]
 # Assigns commits to groups.
 # Optionally sets the commit's scope and can decide to exclude commits from further processing.
-#
-# NOTE: This changelog is only about the CLI, so we only keep the commits
-# whose scope is `cli` or `rust` (i.e. change the CLI and/or the Rust workspace).
-#
-# Doing this with a single negate parser is not possible: the regex engine
-# used by git-cliff (the Rust `regex` crate) does not support negative
-# lookahead (see https://github.com/rust-lang/regex/issues/127), so the scope
-# restriction has to be repeated in each type parser.
 commit_parsers = [
-    { field = "scope", pattern = '^client(?:/\w+)?$', scope = "<!-- 0 -->🌐 Application", continue = true },
-    { field = "scope", pattern = '^libparsec(?:/\w+)?$', scope = "<!-- 1 -->📚 Libparsec", continue = true },
-    { field = "scope", pattern = "^rust$", scope = "<!-- 2 -->🦀 Rust", continue = true },
-    { message = '^feat\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
-    { message = '^fix\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
-    { message = '^docs\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
-    { message = '^perf\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 4 -->⚡ Performance" },
-    { message = '^refactor\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 2 -->🚜 Refactor" },
-    { message = '^style\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
-    { message = '^test\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 6 -->🧪 Testing" },
-    { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
-    { message = '^revert\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
+    { field = "scope", pattern = '^client$', scope = "<!-- 0 -->🌐 Application", continue = true },
+    { field = "scope", pattern = '^client/web$', scope = "<!-- 1 -->🌐 Web specific", continue = true },
+    { field = "scope", pattern = '^client/desktop$', scope = "<!-- 1 -->🖥️ Desktop specific", continue = true },
+    { message = '^feat\((?:(?:client(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
+    { message = '^fix\((?:(?:client(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
+    { message = '^docs\((?:(?:client(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
+    { message = '^perf\((?:(?:client(?:/\w+)?))\)', group = "<!-- 4 -->⚡ Performance" },
+    { message = '^refactor\((?:(?:client(?:/\w+)?))\)', group = "<!-- 2 -->🚜 Refactor" },
+    { message = '^style\((?:(?:client(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
+    { message = '^test\((?:(?:client(?:/\w+)?))\)', group = "<!-- 6 -->🧪 Testing" },
+    { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Tasks" },
+    { message = '^revert\((?:(?:client(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
     # Any other type (e.g. `build`) scoped `client`/`rust`/`libparsec`
-    { message = '^[a-z]+\((?:(?:client(?:/\w+)?)|rust|(?:libparsec(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
+    { message = '^[a-z]+\((?:(?:client(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
 ]
 # Prevent commits that are breaking from being excluded by commit parsers.
 protect_breaking_commits = false
