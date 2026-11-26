@@ -848,3 +848,73 @@ pub fn workspace_editics_generate_auth_token(
         document,
     ))
 }
+
+pub struct WorkspaceEditicsPreparedDocumentSession {
+    pub organization_id: OrganizationID,
+    pub realm_id: VlobID,
+    pub document_id: VlobID,
+    pub editics_server_url: Option<String>,
+}
+
+pub type WorkspaceEditicsPreparedDocumentSessionError = WorkspaceStatEntryError;
+
+pub async fn workspace_editics_prepare_document_session(
+    workspace: Handle,
+    path: FsPath,
+) -> Result<WorkspaceEditicsPreparedDocumentSession, WorkspaceEditicsPreparedDocumentSessionError> {
+    let (client_handle, workspace) = borrow_from_handle(workspace, |x| match x {
+        HandleItem::Workspace {
+            client,
+            workspace_ops,
+            ..
+        } => Some((*client, workspace_ops.clone())),
+        _ => None,
+    })?;
+    let client = borrow_from_handle(client_handle, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })?;
+
+    let organization_id = client.organization_id().to_owned();
+    let realm_id = workspace.realm_id();
+    let document_id = workspace.stat_entry(&path).await?.id();
+
+    let editics_server_url = {
+        let editics_server_urls = client.server_organization_config().editics_server_urls;
+        match editics_server_urls.len() {
+            // Editics disabled on server side
+            0 => None,
+            // Single editics server: no sharding
+            1 => Some(
+                editics_server_urls
+                    .into_iter()
+                    .next()
+                    .expect("already checked"),
+            ),
+            // Multiple editics server: run the sharding algorithm
+            editics_server_urls_count => {
+                let index = editics_compute_sharding_index(
+                    editics_server_urls_count
+                        .try_into()
+                        .expect("already checked"),
+                    &organization_id,
+                    realm_id,
+                    document_id,
+                );
+                Some(
+                    editics_server_urls
+                        .into_iter()
+                        .nth(index)
+                        .expect("already checked"),
+                )
+            }
+        }
+    };
+
+    Ok(WorkspaceEditicsPreparedDocumentSession {
+        organization_id,
+        realm_id,
+        document_id,
+        editics_server_url,
+    })
+}

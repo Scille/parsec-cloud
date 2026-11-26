@@ -16,6 +16,7 @@ from .common import (
     FsPath,
     Handle,
     IndexInt,
+    OrganizationID,
     Path,
     RealmRole,
     Ref,
@@ -929,6 +930,50 @@ async def workspace_save_and_sync_file_with_cryptpad(
     content: Ref[bytes],
 ) -> Result[None, WorkspaceSaveAndSyncFileWithCryptpadError]:
     raise NotImplementedError
+
+
+class WorkspaceEditicsPreparedDocumentSession(Structure):
+    organization_id: OrganizationID
+    realm_id: VlobID
+    document_id: VlobID
+    editics_server_url: str | None
+
+
+class WorkspaceEditicsPreparedDocumentSessionError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class RealmDeleted:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_editics_prepare_document_session(
+    workspace: Handle,
+    path: FsPath,
+) -> Result[
+    WorkspaceEditicsPreparedDocumentSession, WorkspaceEditicsPreparedDocumentSessionError
+]: ...
 
 
 class WorkspaceEncryptEditicsError(ErrorVariant):
