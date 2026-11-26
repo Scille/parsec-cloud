@@ -5,6 +5,7 @@ import { getRouter } from '@/router';
 import axios, { AxiosInstance } from 'axios';
 
 enum OpenBaoErrorType {
+  Closed = 'closed',
   HTTPError = 'http-error',
   NetworkError = 'network-error',
   InitError = 'init-error',
@@ -220,6 +221,9 @@ async function openBaoConnect(
     return { ok: true, value: client };
   } catch (err: any) {
     window.nativeAPI.log('error', `Error when connecting to SSO: ${err.error} (${err.description})`);
+    if (err.error === 'closed') {
+      return { ok: false, error: { type: OpenBaoErrorType.Closed, detail: err.description } };
+    }
     return { ok: false, error: { type: OpenBaoErrorType.InitError, detail: err.error ?? err.toString() } };
   }
 }

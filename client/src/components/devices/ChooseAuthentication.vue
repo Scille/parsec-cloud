@@ -331,7 +331,7 @@ async function onSSOLoginClicked(provider: OpenBaoAuthConfig): Promise<void> {
     if (!result.ok) {
       if (result.error.type === OpenBaoErrorType.PopupFailed) {
         error.value = 'Authentication.popupBlocked';
-      } else {
+      } else if (result.error.type !== OpenBaoErrorType.Closed) {
         error.value = 'Authentication.invalidOpenBaoData';
       }
       window.nativeAPI.log('error', `Error while connecting with SSO: ${JSON.stringify(result.error)}`);
