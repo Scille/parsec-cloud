@@ -276,7 +276,6 @@ defineExpose({
   gap: ms.spacing('gap-4xl');
   width: 100%;
   transition: box-shadow 150ms ease-in-out;
-  overflow-y: auto;
 
   @include ms.responsive-breakpoint('sm') {
     padding: ms.spacing('padding-4xl');

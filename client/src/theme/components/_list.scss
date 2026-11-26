@@ -331,6 +331,10 @@
       flex-basis: 4rem;
       position: sticky;
       right: 0;
+
+      @include ms.responsive-breakpoint('sm') {
+        align-items: center;
+      }
     }
   }
 

@@ -42,9 +42,6 @@
         v-else
         class="organization-item-last-login"
       >
-        <ion-text class="organization-item-last-login__label">
-          {{ $msTranslate('HomePage.organizationList.lastLogin') }}
-        </ion-text>
         <ion-text class="organization-item-last-login__date">
           {{ lastLoginText }}
         </ion-text>
@@ -81,7 +78,7 @@ const lastLoginText = computed(() => {
   if (!props.lastLoginDevice) {
     return I18n.translate('HomePage.organizationList.noLastLogin');
   }
-  return props.lastLoginDevice.setLocale(I18n.getLocale()).toLocaleString(DateTime.DATE_FULL);
+  return props.lastLoginDevice.setLocale(I18n.getLocale()).toLocaleString(DateTime.DATE_MED);
 });
 
 onMounted(async () => {
@@ -148,7 +145,7 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: ms.spacing('gap-sm');
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
 
     &-header {
@@ -179,22 +176,19 @@ onMounted(async () => {
     display: flex;
     flex-direction: column;
     gap: ms.spacing('gap-xs');
-    flex-shrink: 0;
+    flex: 0 4 auto;
+    min-width: 0;
+    max-width: 30%;
     white-space: nowrap;
-    min-width: 10rem;
-
-    @include ms.responsive-breakpoint('lg') {
-      max-width: 7rem;
-      min-width: 7rem;
-    }
-
-    @include ms.responsive-breakpoint('md') {
-      max-width: 9rem;
-      min-width: 9rem;
-    }
 
     @include ms.responsive-breakpoint('xs') {
       display: none;
+    }
+
+    &__label,
+    &__date {
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     &__label {
@@ -204,7 +198,7 @@ onMounted(async () => {
 
     &__date {
       @include ms.font('body-sm-medium');
-      color: ms.color('text-base-body');
+      color: ms.color('text-base-description');
     }
   }
 

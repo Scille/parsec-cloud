@@ -73,7 +73,9 @@ ion-toolbar ion-button.button-outline::part(native) {
     }
   }
 
-  &:has(.toggle-view-container) {
+  .workspace-archive-page &,
+  .workspace-trash-page &,
+  .toggle-view-container & {
     &::part(scroll) {
       padding-top: 0;
       border-top: none;
@@ -236,6 +238,26 @@ svg {
 
     @include ms.responsive-breakpoint('sm') {
       justify-content: flex-start;
+    }
+
+    &:has(.organization-content),
+    &:has(.login-popup) {
+      height: auto;
+      min-height: 100%;
+
+      .homepage-header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: linear-gradient(180deg, transparent 0%, ms.color('surface-base-default') 100%), ms.color('surface-base-page');
+      }
+
+      .slider-container {
+        height: auto;
+        flex-grow: 1;
+        overflow-x: clip;
+        overflow-y: visible;
+      }
     }
   }
 }

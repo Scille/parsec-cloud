@@ -214,6 +214,7 @@ async function backToAllWorkspaces(): Promise<void> {
     display: flex;
     flex-wrap: wrap;
     gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-none');
   }
 }
 

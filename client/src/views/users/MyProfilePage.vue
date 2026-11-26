@@ -409,10 +409,6 @@ onUnmounted(async () => {
 </script>
 
 <style scoped lang="scss">
-* {
-  transition: all 0.2s ease-in-out;
-}
-
 .profile-page-content {
   border-top: 1px solid ms.color('border-base-default');
 

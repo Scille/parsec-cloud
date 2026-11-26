@@ -388,8 +388,6 @@ const sortedDevices = computed(() => {
   display: flex;
   flex-direction: column;
   gap: ms.spacing('gap-6xl');
-  overflow-y: auto;
-  height: 100%;
   width: 100%;
   max-width: 40rem;
   margin-inline: auto;
