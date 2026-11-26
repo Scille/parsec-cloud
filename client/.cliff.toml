@@ -56,7 +56,7 @@ commit_preprocessors = [
 commit_parsers = [
     { field = "scope", pattern = '^client$', scope = "<!-- 0 -->🌐 Application", continue = true },
     { field = "scope", pattern = '^client/web$', scope = "<!-- 1 -->🌐 Web Specific", continue = true },
-    { field = "scope", pattern = '^client/desktop$', scope = "<!-- 1 -->🖥️ Desktop Specific", continue = true },
+    { field = "scope", pattern = '^client/desktop$', scope = "<!-- 2 -->🖥️ Desktop Specific", continue = true },
     { message = '^feat\((?:(?:client(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
     { message = '^fix\((?:(?:client(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
     { message = '^docs\((?:(?:client(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
@@ -65,7 +65,7 @@ commit_parsers = [
     { message = '^style\((?:(?:client(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
     { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Internal Changes" },
     { message = '^revert\((?:(?:client(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
-    # Any other type (e.g. `build`) scoped `client`/`rust`/`libparsec`
+    # Any other type (e.g. `build`) scoped `client`
     { message = '^[a-z]+\((?:(?:client(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
 ]
 # Prevent commits that are breaking from being excluded by commit parsers.
