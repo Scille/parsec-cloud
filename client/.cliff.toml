@@ -58,16 +58,16 @@ commit_parsers = [
     { field = "scope", pattern = '^client/desktop$', scope = "<!-- 2 -->🖥️ Desktop Specific", continue = true },
 
     # Renames group (i.e. commit types)
-    { message = '^feat\((?:(?:client(?:/\w+)?))\)', group = "<!-- 0 -->🚀 Features" },
-    { message = '^fix\((?:(?:client(?:/\w+)?))\)', group = "<!-- 1 -->🐛 Bug Fixes" },
-    { message = '^refactor\((?:(?:client(?:/\w+)?))\)', group = "<!-- 2 -->🚜 Refactor" },
-    { message = '^docs\((?:(?:client(?:/\w+)?))\)', group = "<!-- 3 -->📚 Documentation" },
-    { message = '^perf\((?:(?:client(?:/\w+)?))\)', group = "<!-- 4 -->⚡ Performance" },
-    { message = '^style\((?:(?:client(?:/\w+)?))\)', group = "<!-- 5 -->🎨 Styling" },
-    { message = '^(?:chore|ci)\((?:(?:client(?:/\w+)?))\)', group = "<!-- 7 -->⚙️ Miscellaneous Internal Changes" },
-    { message = '^revert\((?:(?:client(?:/\w+)?))\)', group = "<!-- 9 -->◀️ Revert" },
-    # Any other type (e.g. `build`) scoped `client`
-    { message = '^[a-z]+\((?:(?:client(?:/\w+)?))\)', group = "<!-- 10 -->💼 Other" },
+    { message = '^feat\((?:client(?:/\w+)?)\)', group = "<!-- 0 -->🚀 Features" },
+    { message = '^fix\((?:client(?:/\w+)?)\)', group = "<!-- 1 -->🐛 Bug Fixes" },
+    { message = '^refactor\((?:client(?:/\w+)?)\)', group = "<!-- 2 -->🚜 Refactor" },
+    { message = '^docs\((?:client(?:/\w+)?)\)', group = "<!-- 3 -->📚 Documentation" },
+    { message = '^perf\((?:client(?:/\w+)?)\)', group = "<!-- 4 -->⚡ Performance" },
+    { message = '^style\((?:client(?:/\w+)?)\)', group = "<!-- 5 -->🎨 Styling" },
+    { message = '^test\((?:client(?:/\w+)?)\)', group = "<!-- 6 -->🧪 Testing", skip = true },
+    { message = '^(?:chore|ci)\((?:client(?:/\w+)?)\)', group = "<!-- 7 -->⚙️ Miscellaneous Internal Changes" },
+    { message = '^revert\((?:client(?:/\w+)?)\)', group = "<!-- 9 -->◀️ Revert" },
+    { message = '^[a-z]+\((?:client(?:/\w+)?)\)', group = "<!-- 10 -->💼 Other" },
 ]
 # Prevent commits that are breaking from being excluded by commit parsers.
 protect_breaking_commits = false
