@@ -107,7 +107,7 @@ jobs:
       - name: Get rust flag release
         shell: bash
         run: |
-          echo "MATURIN_PEP517_ARGS=$(python make.py --quiet python-release-libparsec-cargo-flags) --locked" >> $GITHUB_ENV
+          echo "MATURIN_PEP517_ARGS=$(python make.py --quiet python-release-libparsec-cargo-flags) --locked" | tee -a $GITHUB_ENV
         env:
           LIBPARSEC_FORCE_VENDORED_OPENSSL: true
         timeout-minutes: 1
@@ -129,6 +129,7 @@ jobs:
           output-dir: dist
         env:
           MATURIN_PEP517_ARGS: ${{ env.MATURIN_PEP517_ARGS }}
+          CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS: -A linker_messages
         timeout-minutes: 50
 
       - name: Set file for wheel version
