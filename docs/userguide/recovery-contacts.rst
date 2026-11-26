@@ -21,17 +21,76 @@ When you set up your recovery contacts, Parsec splits the information needed to
 recover your access into several parts and gives one part to each of your
 recovery contacts.
 
-- You choose **at least 3** recovery contacts.
-- Any **2** of them are enough to help you recover your access.
-- A single recovery contact can **never** recover your access alone.
+To recover access, you will get in touch with some of your recovery contacts (by
+email, by phone or in person) to get their approval. Once you have enough approvals,
+you can access Parsec again.
 
-This way, you can still recover your access even if one of your recovery
-contacts is unavailable (on holiday, has left the organization, etc.).
+The process is summarized in the following steps.
 
-To recover your access, you will get in touch with your recovery contacts (by
-email, by phone or in person) and perform a short **code exchange** with each of
-them. Each successful code exchange counts as an **approval**. Once you have 2
-approvals, you can access Parsec again.
+1. Choose your recovery contacts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+From your profile and the ``Access recovery`` tab, choose at least
+**3 contacts**. Parsec gives each of them a piece of the information needed to
+restore your access.
+
+A single recovery contact can **never** recover your access alone.
+
+.. image:: screens/recovery_contacts_illustration_setup.jpg
+    :align: center
+    :alt: Choose your recovery contacts
+
+2. Ask a contact for help
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you lose your access to a Parsec organization, get in touch with one of your
+recovery contacts by phone, by email or in person. As soon as they click
+``Start``, you receive a **recovery link** by email: open it.
+
+.. image:: screens/recovery_contacts_illustration_ask_help.jpg
+    :align: center
+    :alt: Ask a recovery contact for help
+
+3. Exchange codes with this contact
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Give each other your codes, for example during a call. If the expected code is
+not in the list, stop everything. A successful **code exchange** counts as an
+**approval**.
+
+.. image:: screens/recovery_contacts_illustration_code_exchange.jpg
+    :align: center
+    :alt: Exchange codes with this contact
+
+.. image:: screens/recovery_contacts_illustration_first_approval.jpg
+    :align: center
+    :alt: A first approval, 2 code exchanges are required
+
+4. Start again with a second contact
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ask another contact to click ``Start``, then exchange your codes. **Two**
+contacts are enough, whichever they are. This way, you can still recover your
+access even if one of your recovery contacts is unavailable (on holiday, has
+left the organization, etc.).
+
+.. image:: screens/recovery_contacts_illustration_second_contact.jpg
+    :align: center
+    :alt: Start again with a second contact
+
+.. image:: screens/recovery_contacts_illustration_approvals_done.jpg
+    :align: center
+    :alt: 2 approved code exchanges
+
+5. Choose a new authentication method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With 2 approvals, set how you want to log in from now on. Your access is
+recovered!
+
+.. image:: screens/recovery_contacts_illustration_new_auth.jpg
+    :align: center
+    :alt: Choose a new authentication method
 
 .. note::
 
