@@ -1,9 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::num::NonZeroUsize;
+
+use crate::{OrganizationID, VlobID};
 use pyo3::{
     Bound, Py, PyAny, PyResult, Python,
     exceptions::PyValueError,
-    pyclass, pymethods,
+    pyclass, pyfunction, pymethods,
     types::{PyBytes, PyType},
 };
 
@@ -203,4 +206,19 @@ impl AdvisoryDeviceFileProtection {
     fn str(&self) -> &'static str {
         self.0.as_str()
     }
+}
+
+#[pyfunction]
+pub(crate) fn editics_compute_sharding_index(
+    servers: NonZeroUsize,
+    organization_id: &OrganizationID,
+    realm_id: &VlobID,
+    document_id: &VlobID,
+) -> usize {
+    libparsec_types::editics_compute_sharding_index(
+        servers,
+        &organization_id.0,
+        realm_id.0,
+        document_id.0,
+    )
 }
