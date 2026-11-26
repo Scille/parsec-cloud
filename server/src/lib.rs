@@ -86,6 +86,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<DateTime>()?;
 
     // Misc
+    m.add_function(pyo3::wrap_pyfunction!(editics_compute_sharding_index, &m)?)?;
     m.add_class::<ApiVersion>()?;
     m.add_class::<ValidationCode>()?;
     m.add_class::<AdvisoryDeviceFileProtection>()?;

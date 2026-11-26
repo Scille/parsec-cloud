@@ -101,6 +101,7 @@ from parsec._parsec_pyi.misc import (
     AdvisoryDeviceFileProtection,
     ApiVersion,
     ValidationCode,
+    editics_compute_sharding_index,
 )
 from parsec._parsec_pyi.pki import (
     PkiEnrollmentAnswerPayload,
@@ -134,6 +135,7 @@ __all__ = [
     "AdvisoryDeviceFileProtection",
     "ApiVersion",
     "ValidationCode",
+    "editics_compute_sharding_index",
     # Data Error
     # Async enrollment
     "AsyncEnrollmentAcceptPayload",

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from parsec._parsec_pyi.ids import OrganizationID, VlobID
+
 class ApiVersion:
     API_V1_VERSION: ApiVersion
     API_V2_VERSION: ApiVersion
@@ -55,3 +57,7 @@ class AdvisoryDeviceFileProtection:
     def with_totp(self) -> bool: ...
     @property
     def str(self) -> str: ...
+
+def editics_compute_sharding_index(
+    servers: int, organization_id: OrganizationID, realm_id: VlobID, document_id: VlobID
+) -> int: ...
