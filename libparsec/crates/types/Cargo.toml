@@ -13,7 +13,7 @@ exclude = ["tests/", "examples/", "benches/"]
 workspace = true
 
 [features]
-test-mock-time = []
+test-mock-time = ["dep:lazy_static"]
 test-fixtures = ["dep:hex-literal", "dep:rstest"]
 
 [dependencies]
@@ -24,7 +24,7 @@ libparsec_zstd = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 bytes = { workspace = true, features = ["serde"] }
-lazy_static = { workspace = true }
+lazy_static = { workspace = true, optional = true }
 serde_with = { workspace = true, features = ["std", "macros"] }
 rmp-serde = { workspace = true }
 serde_bytes = { workspace = true, features = ["std"] }
