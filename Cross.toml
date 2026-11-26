@@ -13,7 +13,7 @@ pre-build = [
 [target.x86_64-unknown-linux-musl]
 image = "alpine:3.16"
 pre-build = [
-    "apk add --no-cache fuse3-dev fuse3-static openssl-dev dbus-dev musl-dev build-base perl rustup gcompat",
+    "apk add --no-cache fuse3-dev fuse3-static openssl-dev openssl-libs-static dbus-dev dbus-static musl-dev build-base perl rustup gcompat",
     # Install our own rustup toolchain since we prefer to not rely on the host provided one
     "rustup-init -y --default-toolchain stable --profile minimal",
     # Make sure the build user will be able to access the toolchain binaries

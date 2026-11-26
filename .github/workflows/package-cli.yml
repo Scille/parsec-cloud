@@ -45,6 +45,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/package-cli.yml
+      - Cross.toml
 
 # We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
 # But on the main branch, we don't want that behavior.
