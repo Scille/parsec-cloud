@@ -353,6 +353,15 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
   popup.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' };
   });
+  let resultSent = false;
+  popup.on('close', (_event) => {
+    if (!resultSent) {
+      parsecApp.sendEvent(WindowToPageChannel.SSOComplete, {
+        ok: false,
+        error: { error: 'closed', description: 'pop-up was closed' },
+      });
+    }
+  });
   popup.webContents.on('will-redirect', (event, url) => {
     // When the redirect URL is called, check that it is the URL callback, and if so,
     // close the popup and send the infos
@@ -368,6 +377,7 @@ ipcMain.on(PageToWindowChannel.OpenPopup, async (_event, url: string) => {
           error: { error: params.get('error') ?? 'unknown', description: params.get('error_description') },
         });
       }
+      resultSent = true;
       event.preventDefault();
       popup.hide();
       popup.destroy();
