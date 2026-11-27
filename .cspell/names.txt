@@ -12,6 +12,7 @@ Blazkowicz
 Boby
 Breen
 clap_mangen
+commitlintrc
 coolorg
 Cüneyt
 Dalvik
@@ -50,6 +51,7 @@ Nihilanth
 oremanj
 pandoc
 Poedit
+prek
 proconnect
 rechiffrement
 rechiffrer
