@@ -69,11 +69,13 @@ class OrganizationDump:
     bootstrapped_on: DateTime | None
     is_bootstrapped: bool
     expired_on: DateTime | None
-    is_expired: bool
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
     realm_minimum_archiving_period_before_deletion: int
     tos: TermsOfService | None
+
+    def is_expired(self, now: DateTime) -> bool:
+        return self.expired_on is not None and self.expired_on <= now
 
 
 class OrganizationBootstrapValidateBadOutcome(BadOutcomeEnum):
@@ -177,7 +179,6 @@ def organization_bootstrap_validate(
 class Organization:
     organization_id: OrganizationID
     bootstrap_token: AccessToken | None
-    is_expired: bool
     expired_on: DateTime | None
     created_on: DateTime
     realm_minimum_archiving_period_before_deletion: int
@@ -197,6 +198,9 @@ class Organization:
     @property
     def is_sequestered(self) -> bool:
         return self.sequester_authority_certificate is not None
+
+    def is_expired(self, now: DateTime) -> bool:
+        return self.expired_on is not None and self.expired_on <= now
 
 
 class OrganizationCreateBadOutcome(BadOutcomeEnum):
@@ -296,6 +300,7 @@ class BaseOrganizationComponent:
     # TODO: This is intended for organization admins but is not currently exposed/used
     async def stats(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         at: DateTime | None = None,
@@ -329,7 +334,7 @@ class BaseOrganizationComponent:
         raise NotImplementedError
 
     async def get_tos(
-        self, id: OrganizationID
+        self, now: DateTime, id: OrganizationID
     ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         raise NotImplementedError
 
@@ -414,7 +419,9 @@ class BaseOrganizationComponent:
     async def api_tos_get(
         self, client_ctx: AuthenticatedClientContext, req: tos_cmds.latest.tos_get.Req
     ) -> tos_cmds.latest.tos_get.Rep:
+        now = DateTime.now()
         outcome = await self.get_tos(
+            now=now,
             id=client_ctx.organization_id,
         )
         match outcome:

@@ -136,7 +136,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         return Organization(
             organization_id=org.organization_id,
             bootstrap_token=org.bootstrap_token,
-            is_expired=org.is_expired,
             expired_on=org.expired_on,
             created_on=org.created_on,
             bootstrapped_on=org.bootstrapped_on,
@@ -174,7 +173,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         async with org.topics_lock(write=["common"]):
-            if org.is_expired:
+            if org.is_expired(now):
                 return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED
 
             if org.bootstrap_token != bootstrap_token:
@@ -235,6 +234,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     @override
     async def stats(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         at: DateTime | None = None,
@@ -243,7 +243,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return OrganizationStatsAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return OrganizationStatsAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -368,7 +368,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
 
         if is_expired is not Unset:
-            org.is_expired = is_expired
             org.expired_on = now if is_expired else None
         if active_users_limit is not Unset:
             org.active_users_limit = active_users_limit
@@ -385,7 +384,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 org.tos = TermsOfService(updated_on=now, per_locale_urls=tos)
 
         # TODO: the event is triggered even if the orga was already expired, is this okay ?
-        if org.is_expired:
+        if org.is_expired(now):
             await self._event_bus.send(EventOrganizationExpired(organization_id=id))
 
         if tos is not Unset:
@@ -393,12 +392,15 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
     @override
     async def get_tos(
-        self, id: OrganizationID
+        self, now: DateTime, id: OrganizationID
     ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
         try:
             org = self._data.organizations[id]
         except KeyError:
             return OrganizationGetTosBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if org.is_expired(now):
+            return OrganizationGetTosBadOutcome.ORGANIZATION_EXPIRED
 
         if org.tos is None:
             return None
@@ -422,7 +424,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 bootstrapped_on=org.bootstrapped_on,
                 is_bootstrapped=org.is_bootstrapped,
                 expired_on=org.expired_on,
-                is_expired=org.is_expired,
                 active_users_limit=org.active_users_limit,
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
                 realm_minimum_archiving_period_before_deletion=org.realm_minimum_archiving_period_before_deletion,

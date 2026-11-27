@@ -31,7 +31,12 @@ class MemoryBlockComponent(BaseBlockComponent):
 
     @override
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, block_id: BlockID
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: VlobID,
+        block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
         try:
             org = self._data.organizations[organization_id]

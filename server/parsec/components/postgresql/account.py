@@ -339,9 +339,9 @@ class PGAccountComponent(BaseAccountComponent):
     @override
     @no_transaction
     async def organization_self_list(
-        self, conn: AsyncpgConnection, auth_method_id: AccountAuthMethodID
+        self, conn: AsyncpgConnection, now: DateTime, auth_method_id: AccountAuthMethodID
     ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
-        return await organization_self_list(conn, auth_method_id)
+        return await organization_self_list(conn, now, auth_method_id)
 
     @override
     @transaction

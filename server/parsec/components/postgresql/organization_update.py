@@ -34,8 +34,7 @@ def _q_update_factory(
 ) -> Q:
     fields = []
     if with_is_expired:
-        fields.append("is_expired = $is_expired")
-        fields.append("_expired_on = (CASE WHEN $is_expired THEN NOW() ELSE NULL END)")
+        fields.append("_expired_on = (CASE WHEN $is_expired THEN $now ELSE NULL END)")
     if with_active_users_limit:
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:
@@ -54,7 +53,7 @@ def _q_update_factory(
             SET
             {", ".join(fields)}
             WHERE organization_id = $organization_id
-            RETURNING is_expired
+            RETURNING (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
         """
     )
 
@@ -88,6 +87,9 @@ async def organization_update(
         return
 
     fields: dict[str, SqlQueryParam] = {}
+    # `now` is always needed given the RETURNING clause computes the
+    # organization expiration status at the time of the update.
+    fields["now"] = now
     if with_is_expired:
         fields["is_expired"] = is_expired
     if with_active_users_limit:

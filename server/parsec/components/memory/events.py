@@ -9,7 +9,7 @@ from typing import override
 import anyio
 from anyio.streams.memory import MemoryObjectSendStream
 
-from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import DateTime, OrganizationID, UserID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.events import Event, EventOrganizationConfig
@@ -69,11 +69,12 @@ class MemoryEventsComponent(BaseEventsComponent):
     async def _get_registration_info_for_user(
         self, organization_id: OrganizationID, user_id: UserID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
+        now = DateTime.now()
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
 
         try:

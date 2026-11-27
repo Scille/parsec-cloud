@@ -24,11 +24,11 @@ _q_lock_common_write_and_fetch_checks = Q("""
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired,
         bootstrap_token,
         (root_verify_key IS NOT NULL) AS already_bootstrapped,
         -- Use `IS DISTINCT FROM` clause to handle comparison with NULL values
-        (bootstrap_token IS DISTINCT FROM $bootstrap_token) AS invalid_bootstrap_token
+        (bootstrap_token IS DISTINCT FROM $bootstrap_token) AS invalid_bootstrap_token,
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -197,6 +197,7 @@ async def organization_bootstrap(
         *_q_lock_common_write_and_fetch_checks(
             organization_id=id.str,
             bootstrap_token=None if bootstrap_token is None else bootstrap_token.hex,
+            now=now,
         )
     )
     assert row is not None

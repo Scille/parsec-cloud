@@ -753,6 +753,7 @@ class BaseRealmComponent:
 
     async def get_keys_bundle(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -771,7 +772,7 @@ class BaseRealmComponent:
         raise NotImplementedError
 
     async def list_info(
-        self, organization_id: OrganizationID, author: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, author: DeviceID
     ) -> list[RealmInfo] | RealmListInfoBadOutcome:
         raise NotImplementedError
 
@@ -878,8 +879,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_create.Req,
     ) -> authenticated_cmds.latest.realm_create.Rep:
+        now = DateTime.now()
         outcome = await self.create(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -922,8 +924,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_share.Req,
     ) -> authenticated_cmds.latest.realm_share.Rep:
+        now = DateTime.now()
         outcome = await self.share(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -982,8 +985,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_unshare.Req,
     ) -> authenticated_cmds.latest.realm_unshare.Rep:
+        now = DateTime.now()
         outcome = await self.unshare(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -1032,8 +1036,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_self_promote_to_owner.Req,
     ) -> authenticated_cmds.latest.realm_self_promote_to_owner.Rep:
+        now = DateTime.now()
         outcome = await self.self_promote_to_owner(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -1084,8 +1089,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_rename.Req,
     ) -> authenticated_cmds.latest.realm_rename.Rep:
+        now = DateTime.now()
         outcome = await self.rename(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -1137,8 +1143,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_rotate_key.Req,
     ) -> authenticated_cmds.latest.realm_rotate_key.Rep:
+        now = DateTime.now()
         outcome = await self.rotate_key(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -1206,8 +1213,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_update_archiving.Req,
     ) -> authenticated_cmds.latest.realm_update_archiving.Rep:
+        now = DateTime.now()
         outcome = await self.update_archiving(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             author_verify_key=client_ctx.device_verify_key,
@@ -1252,7 +1260,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_get_keys_bundle.Req,
     ) -> authenticated_cmds.latest.realm_get_keys_bundle.Rep:
+        now = DateTime.now()
         outcome = await self.get_keys_bundle(
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,
@@ -1292,7 +1302,9 @@ class BaseRealmComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.realm_list_info.Req,
     ) -> authenticated_cmds.latest.realm_list_info.Rep:
+        now = DateTime.now()
         outcome = await self.list_info(
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )

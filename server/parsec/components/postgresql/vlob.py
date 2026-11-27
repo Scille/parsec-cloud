@@ -156,37 +156,40 @@ class PGVlobComponent(BaseVlobComponent):
     async def poll_changes(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
-        return await vlob_poll_changes(conn, organization_id, author, realm_id, checkpoint)
+        return await vlob_poll_changes(conn, now, organization_id, author, realm_id, checkpoint)
 
     @override
     @no_transaction
     async def read_batch(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
         vlobs: list[VlobID],
         at: DateTime | None,
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
-        return await vlob_read_batch(conn, organization_id, author, realm_id, vlobs, at)
+        return await vlob_read_batch(conn, now, organization_id, author, realm_id, vlobs, at)
 
     @override
     @no_transaction
     async def read_versions(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
-        return await vlob_read_versions(conn, organization_id, author, realm_id, items)
+        return await vlob_read_versions(conn, now, organization_id, author, realm_id, items)
 
     @override
     @no_transaction

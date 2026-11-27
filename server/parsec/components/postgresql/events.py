@@ -8,6 +8,7 @@ import anyio
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    DateTime,
     OrganizationID,
     UserID,
     UserProfile,
@@ -96,10 +97,10 @@ _q_get_orga_and_user_infos = Q("""
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired,
         user_profile_outsider_allowed,
         active_users_limit,
-        realm_minimum_archiving_period_before_deletion
+        realm_minimum_archiving_period_before_deletion,
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -168,8 +169,13 @@ class PGEventsComponent(BaseEventsComponent):
     async def _get_registration_info_for_user(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
+        # Capture a fresh `now` for the expiration check (the SSE connection is
+        # long-lived, expiration state is only checked at registration time).
+        now = DateTime.now()
         row = await conn.fetchrow(
-            *_q_get_orga_and_user_infos(organization_id=organization_id.str, user_id=user_id)
+            *_q_get_orga_and_user_infos(
+                organization_id=organization_id.str, user_id=user_id, now=now
+            )
         )
         assert row is not None
 

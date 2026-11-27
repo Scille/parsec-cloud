@@ -267,15 +267,20 @@ class PGUserComponent(BaseUserComponent):
     @override
     @no_transaction
     async def list_frozen_users(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
     ) -> list[UserID] | UserListFrozenUsersBadOutcome:
-        return await user_list_frozen_users(conn, organization_id, device_id)
+        return await user_list_frozen_users(conn, now, organization_id, device_id)
 
     @override
     @no_transaction
     async def get_certificates(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         common_after: DateTime | None,
@@ -285,6 +290,7 @@ class PGUserComponent(BaseUserComponent):
     ) -> CertificatesBundle | UserGetCertificatesAsUserBadOutcome:
         return await user_get_certificates(
             conn,
+            now,
             organization_id,
             author,
             common_after,
@@ -325,12 +331,13 @@ class PGUserComponent(BaseUserComponent):
     async def freeze_user(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID | None,
         user_email: EmailAddress | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
-        return await user_freeze_user(conn, organization_id, user_id, user_email, frozen)
+        return await user_freeze_user(conn, now, organization_id, user_id, user_email, frozen)
 
     @override
     @no_transaction

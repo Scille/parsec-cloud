@@ -105,7 +105,7 @@ async def user_update_user(
 ):
     # 1) Write lock common topic
 
-    match await auth_and_lock_common_write(conn, organization_id, author):
+    match await auth_and_lock_common_write(conn, now, organization_id, author):
         case AuthAndLockCommonOnlyData() as db_common:
             pass
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:

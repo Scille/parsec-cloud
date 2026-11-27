@@ -38,9 +38,9 @@ SELECT
     user_.frozen AS user_is_frozen,
     user_.current_profile AS user_current_profile,
     organization.organization_id,
-    organization.is_expired AS organization_is_expired,
     organization.user_profile_outsider_allowed AS organization_user_profile_outsider_allowed,
-    organization.active_users_limit AS organization_active_users_limit
+    organization.active_users_limit AS organization_active_users_limit,
+    (organization._expired_on IS NOT NULL AND organization._expired_on <= $now) AS organization_is_expired
 FROM user_
 INNER JOIN human ON user_.human = human._id
 INNER JOIN organization ON user_.organization = organization._id
@@ -70,6 +70,7 @@ WHERE
 
 async def organization_self_list(
     conn: AsyncpgConnection,
+    now: DateTime,
     auth_method_id: AccountAuthMethodID,
 ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
     # 1) Get the account email
@@ -86,7 +87,7 @@ async def organization_self_list(
 
     # 2) Find all organizations related to this email
 
-    rows = await conn.fetch(*_q_get_organizations(email=raw_account_email))
+    rows = await conn.fetch(*_q_get_organizations(email=raw_account_email, now=now))
 
     active = []
     for row in rows:

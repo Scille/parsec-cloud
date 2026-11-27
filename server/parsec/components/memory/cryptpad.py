@@ -39,7 +39,7 @@ class MemoryCryptpadComponent(BaseCryptpadComponent):
         except KeyError:
             return CryptpadRegisterSessionBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if org.is_expired:
+        if org.is_expired(now):
             return CryptpadRegisterSessionBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common", ("realm", realm_id)]) as (

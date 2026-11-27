@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from parsec._parsec import AccessToken, DeviceID, OrganizationID, UserID
+from parsec._parsec import AccessToken, DateTime, DeviceID, OrganizationID, UserID
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.queries import (
     AuthNoLockBadOutcome,
@@ -71,10 +71,11 @@ async def _totp_setup_retrieve_or_create_secret(
 
 async def totp_setup_get_secret(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> bytes | TOTPSetupGetSecretBadOutcome:
-    match await auth_no_lock(conn, organization_id, author):
+    match await auth_no_lock(conn, now, organization_id, author):
         case AuthNoLockData() as db_auth:
             pass
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -95,7 +96,7 @@ _q_get_organization_user_token = Q("""
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -129,12 +130,15 @@ SELECT
 
 async def totp_setup_get_secret_with_token(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     user_id: UserID,
     token: AccessToken,
 ) -> bytes | TOTPSetupGetSecretWithTokenBadOutcome:
     row = await conn.fetchrow(
-        *_q_get_organization_user_token(organization_id=organization_id.str, user_id=user_id)
+        *_q_get_organization_user_token(
+            organization_id=organization_id.str, user_id=user_id, now=now
+        )
     )
     assert row is not None
 

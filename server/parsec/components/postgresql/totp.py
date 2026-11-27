@@ -53,45 +53,49 @@ class PGTOTPComponent(BaseTOTPComponent):
     async def setup_get_secret(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> bytes | TOTPSetupGetSecretBadOutcome:
-        return await totp_setup_get_secret(conn, organization_id, author)
+        return await totp_setup_get_secret(conn, now, organization_id, author)
 
     @override
     @transaction
     async def setup_confirm(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         one_time_password: str,
     ) -> TOTPSetupConfirmBadOutcome | None:
-        return await totp_setup_confirm(conn, organization_id, author, one_time_password)
+        return await totp_setup_confirm(conn, now, organization_id, author, one_time_password)
 
     @override
     @transaction  # Transaction is needed since the TOTP secret is lazily created
     async def setup_get_secret_with_token(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID,
         token: AccessToken,
     ) -> bytes | TOTPSetupGetSecretWithTokenBadOutcome:
-        return await totp_setup_get_secret_with_token(conn, organization_id, user_id, token)
+        return await totp_setup_get_secret_with_token(conn, now, organization_id, user_id, token)
 
     @override
     @transaction
     async def setup_confirm_with_token(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID,
         token: AccessToken,
         one_time_password: str,
     ) -> TOTPSetupConfirmWithTokenBadOutcome | None:
         return await totp_setup_confirm_with_token(
-            conn, organization_id, user_id, token, one_time_password
+            conn, now, organization_id, user_id, token, one_time_password
         )
 
     @override
@@ -99,10 +103,11 @@ class PGTOTPComponent(BaseTOTPComponent):
     async def create_opaque_key(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> tuple[TOTPOpaqueKeyID, SecretKey] | TOTPCreateOpaqueKeyBadOutcome:
-        return await totp_create_opaque_key(conn, organization_id, author)
+        return await totp_create_opaque_key(conn, now, organization_id, author)
 
     @override
     @no_transaction

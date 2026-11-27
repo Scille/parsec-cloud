@@ -20,7 +20,10 @@ async def _reset_alice_totp_setup(
     _, _, totp_reset_addr, _ = outcome
 
     totp_secret = await backend.totp.setup_get_secret_with_token(
-        org.organization_id, org.alice.user_id, totp_reset_addr.token
+        now=DateTime.now(),
+        organization_id=org.organization_id,
+        user_id=org.alice.user_id,
+        token=totp_reset_addr.token,
     )
     assert isinstance(totp_secret, bytes)
 
@@ -114,6 +117,7 @@ async def test_anonymous_totp_setup_confirm_bad_token(
     # Good token, but user is frozen
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
         user_email=None,
@@ -129,6 +133,7 @@ async def test_anonymous_totp_setup_confirm_bad_token(
     assert rep == anonymous_cmds.latest.totp_setup_confirm.RepBadToken()
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
         user_email=None,

@@ -289,6 +289,7 @@ async def administration_get_organization(
     The organization configuration is described by the same options used during organization creation.
     """
     backend: Backend = request.app.state.backend
+    now = DateTime.now()
 
     # Check whether the organization actually exists
     outcome = await backend.organization.get(id=organization_id)
@@ -300,7 +301,7 @@ async def administration_get_organization(
 
     return GetOrganizationOut(
         is_bootstrapped=organization.is_bootstrapped,
-        is_expired=organization.is_expired,
+        is_expired=organization.is_expired(now),
         user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
         active_users_limit=organization.active_users_limit.to_maybe_int(),
         realm_minimum_archiving_period_before_deletion=organization.realm_minimum_archiving_period_before_deletion,
@@ -689,9 +690,14 @@ async def administration_organization_users_freeze(
     See [Freeze Users](https://docs.parsec.cloud/en/latest/hosting/administration/freeze-users.html).
     """
     backend: Backend = request.app.state.backend
+    now = DateTime.now()
 
     outcome = await backend.user.freeze_user(
-        organization_id, user_id=body.user_id, user_email=body.user_email, frozen=body.frozen
+        now=now,
+        organization_id=organization_id,
+        user_id=body.user_id,
+        user_email=body.user_email,
+        frozen=body.frozen,
     )
     match outcome:
         case UserInfo() as user:

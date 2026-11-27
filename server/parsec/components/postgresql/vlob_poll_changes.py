@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    DateTime,
     DeviceID,
     OrganizationID,
     VlobID,
@@ -36,7 +37,7 @@ _q_read_fetch_base_data = Q(
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -114,6 +115,7 @@ SELECT
 
 async def vlob_poll_changes(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: VlobID,
@@ -124,6 +126,7 @@ async def vlob_poll_changes(
             organization_id=organization_id.str,
             device_id=author,
             realm_id=realm_id,
+            now=now,
         )
     )
     assert row is not None

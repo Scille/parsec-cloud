@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from parsec._parsec import authenticated_cmds
+from parsec._parsec import DateTime, authenticated_cmds
 from parsec.components.user import UserInfo
 from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
@@ -12,6 +12,7 @@ async def test_authenticated_list_frozen_users_ok(
     assert rep == authenticated_cmds.latest.list_frozen_users.RepOk(frozen_users=[])
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.mallory.user_id,
         user_email=None,

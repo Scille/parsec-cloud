@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DeviceID, OrganizationID, SecretKey, TOTPOpaqueKeyID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, SecretKey, TOTPOpaqueKeyID
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.queries import (
     AuthNoLockBadOutcome,
@@ -28,10 +28,11 @@ VALUES (
 
 async def totp_create_opaque_key(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> tuple[TOTPOpaqueKeyID, SecretKey] | TOTPCreateOpaqueKeyBadOutcome:
-    match await auth_no_lock(conn, organization_id, author):
+    match await auth_no_lock(conn, now, organization_id, author):
         case AuthNoLockData() as auth:
             pass
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:

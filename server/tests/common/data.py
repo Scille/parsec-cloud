@@ -659,6 +659,7 @@ async def authenticated_http_common_errors_tester(
 
             case "author_frozen":
                 outcome = await backend.user.freeze_user(
+                    now=DateTime.now(),
                     organization_id=coolorg.organization_id,
                     user_id=coolorg.alice.user_id,
                     user_email=None,
@@ -783,6 +784,7 @@ async def tos_http_common_errors_tester(
 
             case "author_frozen":
                 outcome = await backend.user.freeze_user(
+                    now=DateTime.now(),
                     organization_id=coolorg.organization_id,
                     user_id=coolorg.alice.user_id,
                     user_email=None,

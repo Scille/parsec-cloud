@@ -61,10 +61,11 @@ ORDER BY submitted_on ASC
 
 async def async_enrollment_list(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
-    match await auth_no_lock(conn, organization_id, author):
+    match await auth_no_lock(conn, now, organization_id, author):
         case AuthNoLockData() as auth_data:
             organization_internal_id = auth_data.organization_internal_id
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:

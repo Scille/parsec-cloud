@@ -93,7 +93,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
@@ -187,7 +187,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
@@ -261,7 +261,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
@@ -379,7 +379,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
@@ -463,6 +463,7 @@ class MemoryUserComponent(BaseUserComponent):
     @override
     async def get_certificates(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         common_after: DateTime | None,
@@ -474,7 +475,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -677,13 +678,13 @@ class MemoryUserComponent(BaseUserComponent):
 
     @override
     async def get_active_device_verify_key(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, device_id: DeviceID
     ) -> VerifyKey | UserGetActiveDeviceVerifyKeyBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserGetActiveDeviceVerifyKeyBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserGetActiveDeviceVerifyKeyBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -749,7 +750,7 @@ class MemoryUserComponent(BaseUserComponent):
 
     @override
     async def list_frozen_users(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, device_id: DeviceID
     ) -> list[UserID] | UserListFrozenUsersBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -769,6 +770,7 @@ class MemoryUserComponent(BaseUserComponent):
     @override
     async def freeze_user(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID | None,
         user_email: EmailAddress | None,
@@ -835,7 +837,7 @@ class MemoryUserComponent(BaseUserComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return UserAcceptTosBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return UserAcceptTosBadOutcome.ORGANIZATION_EXPIRED
 
         try:

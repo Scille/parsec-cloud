@@ -52,14 +52,14 @@ class OrganizationInfo:
     tos: TermsOfService | None
 
     @classmethod
-    def from_dump(cls, dump: OrganizationDump) -> OrganizationInfo:
+    def from_dump(cls, dump: OrganizationDump, now: DateTime) -> OrganizationInfo:
         return OrganizationInfo(
             id=dump.organization_id,
             created_on=dump.created_on,
             bootstrapped_on=dump.bootstrapped_on,
             is_bootstrapped=dump.is_bootstrapped,
             expired_on=dump.expired_on,
-            is_expired=dump.is_expired,
+            is_expired=dump.is_expired(now),
             user_profile_outsider_allowed=dump.user_profile_outsider_allowed,
             active_users_limit=dump.active_users_limit,
             realm_minimum_archiving_period_before_deletion=dump.realm_minimum_archiving_period_before_deletion,
@@ -89,7 +89,7 @@ async def cmd(
         fake_account_password_algorithm_seed=SecretKey.generate(),
     )
     async with organization_component_factory(backend_config) as component:
-        orgs = await list_organizations(component)
+        orgs = await list_organizations(component, now=DateTime.now())
 
     adapter = pydantic.TypeAdapter(
         dict[
@@ -127,8 +127,9 @@ async def organization_component_factory(
 
 async def list_organizations(
     component: BaseOrganizationComponent,
+    now: DateTime,
 ) -> dict[OrganizationID, OrganizationInfo]:
     return {
-        id: OrganizationInfo.from_dump(dump)
+        id: OrganizationInfo.from_dump(dump, now)
         for id, dump in (await component.list_organizations()).items()
     }

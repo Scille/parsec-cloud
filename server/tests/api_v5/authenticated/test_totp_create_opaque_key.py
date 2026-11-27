@@ -9,6 +9,7 @@ async def _init_totp(
     org: MinimalorgRpcClients | CoolorgRpcClients, backend: Backend
 ) -> tuple[bytes, str]:
     totp_secret = await backend.totp.setup_get_secret(
+        now=DateTime.now(),
         organization_id=org.organization_id,
         author=org.alice.device_id,
     )
@@ -17,6 +18,7 @@ async def _init_totp(
     one_time_password = compute_totp_one_time_password(DateTime.now(), totp_secret)
 
     outcome = await backend.totp.setup_confirm(
+        now=DateTime.now(),
         organization_id=org.organization_id,
         author=org.alice.device_id,
         one_time_password=one_time_password,

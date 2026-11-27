@@ -315,6 +315,7 @@ ORDER BY
 
 async def user_get_certificates(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
     common_after: DateTime | None,
@@ -322,7 +323,7 @@ async def user_get_certificates(
     shamir_recovery_after: DateTime | None,
     realm_after: dict[VlobID, DateTime],
 ) -> CertificatesBundle | UserGetCertificatesAsUserBadOutcome:
-    match await auth_no_lock(conn, organization_id, author):
+    match await auth_no_lock(conn, now, organization_id, author):
         case AuthNoLockData() as db_auth:
             need_redacted = db_auth.user_current_profile == UserProfile.OUTSIDER
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:

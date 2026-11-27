@@ -397,7 +397,7 @@ class BaseAccountComponent:
         raise NotImplementedError
 
     async def organization_self_list(
-        self, auth_method_id: AccountAuthMethodID
+        self, now: DateTime, auth_method_id: AccountAuthMethodID
     ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
         raise NotImplementedError
 
@@ -816,7 +816,8 @@ class BaseAccountComponent:
         organization_self_list = authenticated_account_cmds.latest.organization_self_list
 
         outcome = await self.organization_self_list(
-            client_ctx.auth_method_id,
+            now=DateTime.now(),
+            auth_method_id=client_ctx.auth_method_id,
         )
         match outcome:
             case AccountOrganizationSelfList() as result:

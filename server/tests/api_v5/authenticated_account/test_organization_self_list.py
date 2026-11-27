@@ -67,7 +67,11 @@ async def test_authenticated_account_organization_self_list_ok(
 
     # Frozen should have no effect (but it is a common mistake to confuse it with revoked)
     await backend.user.freeze_user(
-        minimalorg.organization_id, user_id=minimalorg.alice.user_id, user_email=None, frozen=True
+        DateTime.now(),
+        minimalorg.organization_id,
+        user_id=minimalorg.alice.user_id,
+        user_email=None,
+        frozen=True,
     )
 
     # Revoke Alice from Coolorg

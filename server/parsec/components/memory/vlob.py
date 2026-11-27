@@ -78,7 +78,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return VlobCreateBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common", ("realm", realm_id)]) as (
@@ -223,7 +223,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return VlobUpdateBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -352,6 +352,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     @override
     async def read_versions(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -361,7 +362,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -433,6 +434,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     @override
     async def read_batch(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -443,7 +445,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -517,6 +519,7 @@ class MemoryVlobComponent(BaseVlobComponent):
     @override
     async def poll_changes(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -526,7 +529,7 @@ class MemoryVlobComponent(BaseVlobComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:

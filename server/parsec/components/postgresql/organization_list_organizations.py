@@ -23,7 +23,6 @@ SELECT
     _created_on AS created_on,
     bootstrap_token,
     _bootstrapped_on AS bootstrapped_on,
-    is_expired,
     _expired_on AS expired_on,
     active_users_limit,
     user_profile_outsider_allowed,
@@ -80,12 +79,6 @@ async def organization_list_organizations(
             case _:
                 assert False, row
 
-        match row["is_expired"]:
-            case bool() as is_expired:
-                pass
-            case _:
-                assert False, row
-
         match row["expired_on"]:
             case DateTime() as expired_on:
                 pass
@@ -133,7 +126,6 @@ async def organization_list_organizations(
             bootstrap_token=bootstrap_token,
             is_bootstrapped=is_bootstrapped,
             bootstrapped_on=bootstrapped_on,
-            is_expired=is_expired,
             expired_on=expired_on,
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,

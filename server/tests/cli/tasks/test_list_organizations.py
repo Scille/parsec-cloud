@@ -30,7 +30,9 @@ def test_list_organization_cmd(db_config: BaseDatabaseConfig, db_args: list[str]
 
 
 async def test_list_organization(coolorg: CoolorgRpcClients, testbed: TestbedBackend):
-    orgs = await list_organization.list_organizations(testbed.backend.organization)
+    orgs = await list_organization.list_organizations(
+        testbed.backend.organization, now=DateTime.now()
+    )
     coolorg_org = await testbed.backend.organization.get(coolorg.organization_id)
     assert isinstance(coolorg_org, Organization)
 

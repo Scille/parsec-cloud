@@ -93,7 +93,7 @@ async def async_enrollment_accept(
     # We lock the common topic to ensure the user doesn't change its role
     # after we checked it.
     # This is required since we are going to insert new certificates.
-    match await auth_and_lock_common_write(conn, organization_id, author):
+    match await auth_and_lock_common_write(conn, now, organization_id, author):
         case AuthAndLockCommonOnlyData() as db_common:
             pass
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:

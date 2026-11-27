@@ -157,7 +157,7 @@ async def realm_share(
 ):
     # 1) Read lock common topic
 
-    match await auth_and_lock_common_read(conn, organization_id, author):
+    match await auth_and_lock_common_read(conn, now, organization_id, author):
         case AuthAndLockCommonOnlyData() as db_common:
             pass
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:

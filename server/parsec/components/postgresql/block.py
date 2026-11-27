@@ -46,13 +46,14 @@ class PGBlockComponent(BaseBlockComponent):
     @override
     async def read(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
         block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
         return await block_read(
-            self.blockstore, self.pool, organization_id, author, realm_id, block_id
+            self.blockstore, self.pool, now, organization_id, author, realm_id, block_id
         )
 
     @override

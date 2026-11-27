@@ -62,7 +62,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return ShamirSetupStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return ShamirSetupStoreBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -163,7 +163,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return ShamirDeleteStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return ShamirDeleteStoreBadOutcome.ORGANIZATION_EXPIRED
 
         try:

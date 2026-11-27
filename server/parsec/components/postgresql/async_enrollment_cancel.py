@@ -21,7 +21,7 @@ from parsec.events import EventAsyncEnrollment
 _q_check_organization = Q("""
 SELECT
     _id,
-    is_expired
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
 FROM organization
 WHERE
     organization_id = $organization_id
@@ -62,6 +62,7 @@ async def async_enrollment_cancel(
     org_row = await conn.fetchrow(
         *_q_check_organization(
             organization_id=organization_id.str,
+            now=now,
         )
     )
     assert org_row is not None

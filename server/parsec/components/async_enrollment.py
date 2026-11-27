@@ -382,6 +382,7 @@ class BaseAsyncEnrollmentComponent:
 
     async def info(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
     ) -> AsyncEnrollmentInfo | AsyncEnrollmentInfoBadOutcome:
@@ -389,6 +390,7 @@ class BaseAsyncEnrollmentComponent:
 
     async def list(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
@@ -503,6 +505,7 @@ class BaseAsyncEnrollmentComponent:
         req: anonymous_cmds.latest.async_enrollment_info.Req,
     ) -> anonymous_cmds.latest.async_enrollment_info.Rep:
         outcome = await self.info(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             enrollment_id=req.enrollment_id,
         )
@@ -588,6 +591,7 @@ class BaseAsyncEnrollmentComponent:
         req: authenticated_cmds.latest.async_enrollment_list.Req,
     ) -> authenticated_cmds.latest.async_enrollment_list.Rep:
         outcome = await self.list(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )

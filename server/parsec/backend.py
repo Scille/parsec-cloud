@@ -229,6 +229,8 @@ class Backend:
     ) -> None:
         from parsec._parsec import testbed
 
+        now = DateTime.now()
+
         def _get_device_verify_key(device_id: DeviceID) -> VerifyKey:
             for event in events:
                 if isinstance(event, testbed.TestbedEventBootstrapOrganization):
@@ -481,6 +483,7 @@ class Backend:
                     assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventFreezeUser):
                 outcome = await self.user.freeze_user(
+                    now=now,
                     organization_id=org_id,
                     user_id=event.user,
                     user_email=None,

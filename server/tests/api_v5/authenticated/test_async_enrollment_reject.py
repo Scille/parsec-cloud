@@ -80,7 +80,7 @@ async def test_authenticated_async_enrollment_reject_ok(
         )
 
     info = await backend.async_enrollment.info(
-        organization_id=minimalorg.organization_id, enrollment_id=enrollment_id
+        now=DateTime.now(), organization_id=minimalorg.organization_id, enrollment_id=enrollment_id
     )
     assert isinstance(info, AsyncEnrollmentInfoRejected)
     assert info.submitted_on < info.rejected_on

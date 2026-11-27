@@ -326,12 +326,13 @@ class PGRealmComponent(BaseRealmComponent):
     async def get_keys_bundle(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
         key_index: int | None,
     ) -> KeysBundle | RealmGetKeysBundleBadOutcome:
-        return await realm_get_keys_bundle(conn, organization_id, author, realm_id, key_index)
+        return await realm_get_keys_bundle(conn, now, organization_id, author, realm_id, key_index)
 
     @override
     @no_transaction
@@ -350,9 +351,13 @@ class PGRealmComponent(BaseRealmComponent):
     @override
     @no_transaction
     async def list_info(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
     ) -> list[RealmInfo] | RealmListInfoBadOutcome:
-        return await realm_list_info(conn, organization_id, author)
+        return await realm_list_info(conn, now, organization_id, author)
 
     @override
     @no_transaction

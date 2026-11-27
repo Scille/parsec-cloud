@@ -53,7 +53,7 @@ class MemoryAuthComponent(BaseAuthComponent):
             else:
                 return AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if org.is_expired:
+        if org.is_expired(now):
             return AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED
 
         return AnonymousAuthInfo(
@@ -70,7 +70,7 @@ class MemoryAuthComponent(BaseAuthComponent):
         except KeyError:
             return AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if org.is_expired:
+        if org.is_expired(now):
             return AuthInvitedAuthBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -91,14 +91,18 @@ class MemoryAuthComponent(BaseAuthComponent):
 
     @override
     async def _get_authenticated_info(
-        self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        tos_acceptance_required: bool,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if org.is_expired:
+        if org.is_expired(now):
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -125,14 +129,14 @@ class MemoryAuthComponent(BaseAuthComponent):
         )
 
     async def _get_editics_info(
-        self, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
     ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return AuthEditicsAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if org.is_expired:
+        if org.is_expired(now):
             return AuthEditicsAuthBadOutcome.ORGANIZATION_EXPIRED
 
         try:

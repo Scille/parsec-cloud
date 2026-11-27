@@ -120,6 +120,7 @@ async def test_authenticated_realm_rotate_key_ok(
         )
 
     keys_bundle = await backend.realm.get_keys_bundle(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         realm_id=wksp_id,

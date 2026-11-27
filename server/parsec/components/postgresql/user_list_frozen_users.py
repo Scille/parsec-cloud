@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID, UserProfile
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.queries import (
     AuthNoLockBadOutcome,
@@ -28,10 +28,11 @@ ORDER BY user_.created_on
 
 async def user_list_frozen_users(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     device_id: DeviceID,
 ) -> list[UserID] | UserListFrozenUsersBadOutcome:
-    match await auth_no_lock(conn, organization_id, device_id):
+    match await auth_no_lock(conn, now, organization_id, device_id):
         case AuthNoLockData() as db_auth:
             profile = db_auth.user_current_profile
             internal_organization_id = db_auth.organization_internal_id
