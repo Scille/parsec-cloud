@@ -23,6 +23,7 @@ from parsec._version import __version__ as server_version
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import backend_factory
 from parsec.cli.options import (
+    PORT,
     _split_with_escaping,
     asyncio_run,
     blockstore_server_options,
@@ -178,7 +179,7 @@ For instance:
     "--port",
     "-P",
     default=DEFAULT_PORT,
-    type=int,
+    type=PORT,
     show_default=True,
     envvar="PARSEC_PORT",
     show_envvar=True,
@@ -496,7 +497,7 @@ for any given email address).
     "--email-port",
     envvar="PARSEC_EMAIL_PORT",
     show_envvar=True,
-    type=int,
+    type=PORT,
     default=25,
     show_default=True,
     help="Port to use for the SMTP server defined in EMAIL_HOST",

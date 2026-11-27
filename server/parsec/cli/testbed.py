@@ -53,7 +53,7 @@ except ImportError:
 
 from parsec.asgi import AsgiApp, app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
-from parsec.cli.options import debug_config_options, logging_config_options
+from parsec.cli.options import PORT, debug_config_options, logging_config_options
 from parsec.cli.testbed_sso_icons import TESTBED_SSO_ICONS
 from parsec.cli.utils import cli_exception_handler
 from parsec.components.memory.user import MemoryDatamodel, MemoryUserComponent
@@ -1039,7 +1039,7 @@ async def testbed_backend_factory(
     "--port",
     "-P",
     default=DEFAULT_PORT,
-    type=int,
+    type=PORT,
     show_default=True,
     envvar="PARSEC_PORT",
     help="Port to listen on",
