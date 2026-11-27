@@ -84,7 +84,7 @@ async def test_authenticated_account_organization_self_list_ok(
     outcome = await backend.organization.update(
         now=DateTime.now(),
         id=minimalorg.organization_id,
-        is_expired=True,
+        expired_on=DateTime.now(),
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
     )

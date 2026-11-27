@@ -614,7 +614,7 @@ async def authenticated_http_common_errors_tester(
                 outcome = await backend.organization.update(
                     now=DateTime.now(),
                     id=coolorg.organization_id,
-                    is_expired=True,
+                    expired_on=DateTime.now(),
                 )
                 assert outcome is None
 
@@ -739,7 +739,7 @@ async def tos_http_common_errors_tester(
                 outcome = await backend.organization.update(
                     now=DateTime.now(),
                     id=coolorg.organization_id,
-                    is_expired=True,
+                    expired_on=DateTime.now(),
                 )
                 assert outcome is None
 
@@ -829,7 +829,7 @@ async def invited_http_common_errors_tester(
                 outcome = await backend.organization.update(
                     now=DateTime.now(),
                     id=coolorg.organization_id,
-                    is_expired=True,
+                    expired_on=DateTime.now(),
                 )
                 assert outcome is None
 
@@ -874,7 +874,7 @@ async def anonymous_http_common_errors_tester(
         match request.param:
             case "organization_expired":
                 outcome = await backend.organization.update(
-                    now=DateTime.now(), id=coolorg.organization_id, is_expired=True
+                    now=DateTime.now(), id=coolorg.organization_id, expired_on=DateTime.now()
                 )
                 assert outcome is None
 

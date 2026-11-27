@@ -494,7 +494,7 @@ class Backend:
                 outcome = await self.organization.update(
                     now=event.timestamp,
                     id=org_id,
-                    is_expired=event.is_expired,
+                    expired_on=event.timestamp if event.is_expired else None,
                     active_users_limit=event.active_users_limit,
                     user_profile_outsider_allowed=event.user_profile_outsider_allowed,
                     realm_minimum_archiving_period_before_deletion=event.realm_minimum_archiving_period_before_deletion,

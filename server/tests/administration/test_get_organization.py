@@ -52,7 +52,7 @@ async def test_ok(
     await backend.organization.update(
         now=DateTime(2020, 1, 1),
         id=coolorg.organization_id,
-        is_expired=True,
+        expired_on=DateTime(2020, 1, 1),
         active_users_limit=ActiveUsersLimit.limited_to(1),
         user_profile_outsider_allowed=False,
         realm_minimum_archiving_period_before_deletion=10,
