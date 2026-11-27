@@ -543,3 +543,19 @@ integer and `<config>` the MOCKED/POSTGRESQL/S3/SWIFT config.
     for decorator in decorators:
         fn = decorator(fn)
     return fn
+
+
+class PortParamType(click.ParamType[int]):
+    name = "port"
+
+    def convert(self, value: Any, param: click.Parameter | None, ctx: click.Context | None) -> int:
+        try:
+            value = int(value)
+            if 1 <= value <= 65535:
+                return value
+        except ValueError:
+            pass
+        self.fail("Must be between 1 and 65535", param=param)
+
+
+PORT = PortParamType()
