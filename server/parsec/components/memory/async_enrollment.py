@@ -86,7 +86,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentSubmitBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED
 
         match async_enrollment_submit_validate(
@@ -139,6 +139,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
     @override
     async def info(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
     ) -> AsyncEnrollmentInfo | AsyncEnrollmentInfoBadOutcome:
@@ -146,7 +147,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentInfoBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentInfoBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -186,6 +187,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
     @override
     async def list(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
@@ -193,7 +195,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentListBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -232,7 +234,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentCancelBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -260,7 +262,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentRejectBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentRejectBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]):
@@ -315,7 +317,7 @@ class MemoryAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return AsyncEnrollmentAcceptBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):

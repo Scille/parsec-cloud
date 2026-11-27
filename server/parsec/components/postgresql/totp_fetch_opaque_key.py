@@ -16,7 +16,7 @@ _q_get_organization_user_totp = Q("""
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -95,7 +95,10 @@ async def totp_fetch_opaque_key(
 ) -> SecretKey | TOTPFetchOpaqueKeyBadOutcome | TOTPFetchOpaqueKeyThrottled:
     row = await conn.fetchrow(
         *_q_get_organization_user_totp(
-            organization_id=organization_id.str, user_id=user_id, opaque_key_id=opaque_key_id
+            organization_id=organization_id.str,
+            user_id=user_id,
+            opaque_key_id=opaque_key_id,
+            now=now,
         )
     )
     assert row is not None

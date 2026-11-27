@@ -57,7 +57,12 @@ class BaseBlockComponent:
     #
 
     async def read(
-        self, organization_id: OrganizationID, author: DeviceID, realm_id: VlobID, block_id: BlockID
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        realm_id: VlobID,
+        block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
         raise NotImplementedError
 
@@ -87,6 +92,7 @@ class BaseBlockComponent:
         self, client_ctx: AuthenticatedClientContext, req: authenticated_cmds.latest.block_read.Req
     ) -> authenticated_cmds.latest.block_read.Rep:
         outcome = await self.read(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             block_id=req.block_id,

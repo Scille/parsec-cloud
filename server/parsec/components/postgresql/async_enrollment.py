@@ -79,11 +79,13 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
     async def info(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         enrollment_id: AsyncEnrollmentID,
     ) -> AsyncEnrollmentInfo | AsyncEnrollmentInfoBadOutcome:
         return await async_enrollment_info(
             conn,
+            now,
             organization_id,
             enrollment_id,
         )
@@ -93,11 +95,13 @@ class PGAsyncEnrollmentComponent(BaseAsyncEnrollmentComponent):
     async def list(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> list[AsyncEnrollmentListItem] | AsyncEnrollmentListBadOutcome:
         return await async_enrollment_list(
             conn,
+            now,
             organization_id,
             author,
         )

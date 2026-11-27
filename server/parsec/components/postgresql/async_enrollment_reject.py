@@ -61,7 +61,7 @@ async def async_enrollment_reject(
     # no block has been created by a user after it has been revoked).
     # However since there is no hard performance requirements here we choose
     # to stay consistent with what do the `accept` part.
-    match await auth_and_lock_common_read(conn, organization_id, author):
+    match await auth_and_lock_common_read(conn, now, organization_id, author):
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_NOT_FOUND:
             return AsyncEnrollmentRejectBadOutcome.ORGANIZATION_NOT_FOUND
         case AuthAndLockCommonOnlyBadOutcome.ORGANIZATION_EXPIRED:

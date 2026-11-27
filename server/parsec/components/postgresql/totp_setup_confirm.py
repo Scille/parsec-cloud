@@ -41,6 +41,7 @@ WHERE _id = $user_internal_id
 
 async def _totp_setup_confirm(
     conn: AsyncpgConnection,
+    now: DateTime,
     user_internal_id: int,
     one_time_password: str,
 ) -> (
@@ -67,7 +68,7 @@ async def _totp_setup_confirm(
         case _:
             assert False, row
 
-    if not verify_totp(now=DateTime.now(), secret=totp_secret, one_time_password=one_time_password):
+    if not verify_totp(now=now, secret=totp_secret, one_time_password=one_time_password):
         return TOTPSetupConfirmBadOutcome.INVALID_ONE_TIME_PASSWORD
 
     await conn.execute(*_q_complete_totp_setup(user_internal_id=user_internal_id))
@@ -75,11 +76,12 @@ async def _totp_setup_confirm(
 
 async def totp_setup_confirm(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
     one_time_password: str,
 ) -> TOTPSetupConfirmBadOutcome | None:
-    match await auth_no_lock(conn, organization_id, author):
+    match await auth_no_lock(conn, now, organization_id, author):
         case AuthNoLockData() as db_auth:
             pass
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:
@@ -92,19 +94,25 @@ async def totp_setup_confirm(
             return TOTPSetupConfirmBadOutcome.AUTHOR_REVOKED
 
     return await _totp_setup_confirm(
-        conn, user_internal_id=db_auth.user_internal_id, one_time_password=one_time_password
+        conn,
+        now=now,
+        user_internal_id=db_auth.user_internal_id,
+        one_time_password=one_time_password,
     )
 
 
 async def totp_setup_confirm_with_token(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     user_id: UserID,
     token: AccessToken,
     one_time_password: str,
 ) -> TOTPSetupConfirmWithTokenBadOutcome | None:
     row = await conn.fetchrow(
-        *_q_get_organization_user_token(organization_id=organization_id.str, user_id=user_id)
+        *_q_get_organization_user_token(
+            organization_id=organization_id.str, user_id=user_id, now=now
+        )
     )
     assert row is not None
 
@@ -152,7 +160,7 @@ async def totp_setup_confirm_with_token(
             assert False, row
 
     outcome = await _totp_setup_confirm(
-        conn, user_internal_id=user_internal_id, one_time_password=one_time_password
+        conn, now=now, user_internal_id=user_internal_id, one_time_password=one_time_password
     )
     match outcome:
         case None:

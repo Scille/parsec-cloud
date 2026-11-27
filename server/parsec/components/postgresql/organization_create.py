@@ -28,7 +28,6 @@ WITH new_organization AS (
         user_profile_outsider_allowed,
         _created_on,
         _bootstrapped_on,
-        is_expired,
         _expired_on,
         realm_minimum_archiving_period_before_deletion,
         tos_updated_on,
@@ -41,7 +40,6 @@ WITH new_organization AS (
         $user_profile_outsider_allowed,
         $created_on,
         NULL,
-        FALSE,
         NULL,
         $realm_minimum_archiving_period_before_deletion,
         CASE
@@ -59,7 +57,6 @@ WITH new_organization AS (
             active_users_limit = excluded.active_users_limit,
             user_profile_outsider_allowed = excluded.user_profile_outsider_allowed,
             _created_on = excluded._created_on,
-            is_expired = excluded.is_expired,
             _expired_on = excluded._expired_on,
             realm_minimum_archiving_period_before_deletion = excluded.realm_minimum_archiving_period_before_deletion,
             tos_updated_on = excluded.tos_updated_on,

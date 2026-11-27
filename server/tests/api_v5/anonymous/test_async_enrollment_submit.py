@@ -126,7 +126,9 @@ async def test_anonymous_async_enrollment_submit_ok(
             EventAsyncEnrollment(organization_id=minimalorg.organization_id)
         )
 
-    info = await backend.async_enrollment.info(minimalorg.organization_id, enrollment_id)
+    info = await backend.async_enrollment.info(
+        DateTime.now(), minimalorg.organization_id, enrollment_id
+    )
     assert isinstance(info, AsyncEnrollmentInfoSubmitted)
     assert info.submitted_on == rep.submitted_on
 

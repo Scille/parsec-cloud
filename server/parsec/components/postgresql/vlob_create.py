@@ -32,7 +32,7 @@ _q_create_fetch_data_and_lock_topics = Q(
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -206,6 +206,7 @@ async def vlob_create(
             device_id=author,
             realm_id=realm_id,
             vlob_id=vlob_id,
+            now=now,
         )
     )
     assert row is not None

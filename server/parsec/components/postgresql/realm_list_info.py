@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DeviceID, OrganizationID, RealmRole, UserProfile, VlobID
+from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmRole, UserProfile, VlobID
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.queries import (
     AuthNoLockBadOutcome,
@@ -104,10 +104,11 @@ ORDER BY my_realms._id
 
 async def realm_list_info(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     device_id: DeviceID,
 ) -> list[RealmInfo] | RealmListInfoBadOutcome:
-    match await auth_no_lock(conn, organization_id, device_id):
+    match await auth_no_lock(conn, now, organization_id, device_id):
         case AuthNoLockData() as db_auth:
             pass
         case AuthNoLockBadOutcome.ORGANIZATION_NOT_FOUND:

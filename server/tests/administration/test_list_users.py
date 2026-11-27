@@ -2,7 +2,7 @@
 
 import httpx
 
-from parsec._parsec import RevokedUserCertificate
+from parsec._parsec import DateTime, RevokedUserCertificate
 from parsec.components.user import UserInfo
 from tests.common import AdminUnauthErrorsTester, Backend, CoolorgRpcClients, alice_gives_profile
 
@@ -68,6 +68,7 @@ async def test_ok(
     assert isinstance(outcome, RevokedUserCertificate)
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
         user_email=None,

@@ -44,6 +44,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
     @override
     async def setup_get_secret(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> bytes | TOTPSetupGetSecretBadOutcome:
@@ -51,7 +52,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPSetupGetSecretBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPSetupGetSecretBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -78,6 +79,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
     @override
     async def setup_confirm(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         one_time_password: str,
@@ -86,7 +88,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPSetupConfirmBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPSetupConfirmBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -107,9 +109,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
         if user.totp_secret is None:
             return TOTPSetupConfirmBadOutcome.INVALID_ONE_TIME_PASSWORD
 
-        if not verify_totp(
-            now=DateTime.now(), secret=user.totp_secret, one_time_password=one_time_password
-        ):
+        if not verify_totp(now=now, secret=user.totp_secret, one_time_password=one_time_password):
             return TOTPSetupConfirmBadOutcome.INVALID_ONE_TIME_PASSWORD
 
         user.totp_setup_completed = True
@@ -118,6 +118,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
     @override
     async def setup_get_secret_with_token(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID,
         token: AccessToken,
@@ -126,7 +127,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPSetupGetSecretWithTokenBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPSetupGetSecretWithTokenBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -154,6 +155,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
     @override
     async def setup_confirm_with_token(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID,
         token: AccessToken,
@@ -163,7 +165,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPSetupConfirmWithTokenBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPSetupConfirmWithTokenBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -186,9 +188,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
         if user.totp_secret is None:
             return TOTPSetupConfirmWithTokenBadOutcome.INVALID_ONE_TIME_PASSWORD
 
-        if not verify_totp(
-            now=DateTime.now(), secret=user.totp_secret, one_time_password=one_time_password
-        ):
+        if not verify_totp(now=now, secret=user.totp_secret, one_time_password=one_time_password):
             return TOTPSetupConfirmWithTokenBadOutcome.INVALID_ONE_TIME_PASSWORD
 
         user.totp_setup_completed = True
@@ -197,6 +197,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
     @override
     async def create_opaque_key(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
     ) -> tuple[TOTPOpaqueKeyID, SecretKey] | TOTPCreateOpaqueKeyBadOutcome:
@@ -204,7 +205,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPCreateOpaqueKeyBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPCreateOpaqueKeyBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -239,7 +240,7 @@ class MemoryTOTPComponent(BaseTOTPComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return TOTPFetchOpaqueKeyBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return TOTPFetchOpaqueKeyBadOutcome.ORGANIZATION_EXPIRED
 
         try:

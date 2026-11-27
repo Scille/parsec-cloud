@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import auto
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID, UserProfile
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
     Q,
@@ -33,7 +33,7 @@ _q_auth = Q("""
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -77,6 +77,7 @@ SELECT
 
 async def auth_no_lock(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> AuthNoLockData | AuthNoLockBadOutcome:
@@ -100,6 +101,7 @@ async def auth_no_lock(
         *_q_auth(
             organization_id=organization_id.str,
             device_id=author,
+            now=now,
         )
     )
     assert row is not None

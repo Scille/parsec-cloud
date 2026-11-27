@@ -692,12 +692,12 @@ class BaseInviteComponent:
         raise NotImplementedError
 
     async def list(
-        self, organization_id: OrganizationID, author: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         raise NotImplementedError
 
     async def info_as_invited(
-        self, organization_id: OrganizationID, token: AccessToken
+        self, now: DateTime, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         raise NotImplementedError
 
@@ -872,7 +872,9 @@ class BaseInviteComponent:
     ) -> authenticated_cmds.latest.invite_list.Rep:
         invite_list = authenticated_cmds.latest.invite_list
 
+        now = DateTime.now()
         outcome = await self.list(
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )
@@ -934,8 +936,9 @@ class BaseInviteComponent:
     ) -> invited_cmds.latest.invite_info.Rep:
         invite_info = invited_cmds.latest.invite_info
 
+        now = DateTime.now()
         outcome = await self.info_as_invited(
-            organization_id=client_ctx.organization_id, token=client_ctx.token
+            now=now, organization_id=client_ctx.organization_id, token=client_ctx.token
         )
         match outcome:
             case UserInvitation() as invitation:
@@ -1374,7 +1377,9 @@ class BaseInviteComponent:
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_shamir_recovery_reveal.Req,
     ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
+        now = DateTime.now()
         outcome = await self.shamir_recovery_reveal(
+            now=now,
             organization_id=client_ctx.organization_id,
             token=client_ctx.token,
             reveal_token=req.reveal_token,
@@ -1399,6 +1404,7 @@ class BaseInviteComponent:
 
     async def shamir_recovery_reveal(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         token: AccessToken,
         reveal_token: AccessToken,

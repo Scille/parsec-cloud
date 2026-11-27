@@ -445,6 +445,7 @@ class BaseUserComponent:
 
     async def get_certificates(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         common_after: DateTime | None,
@@ -455,7 +456,7 @@ class BaseUserComponent:
         raise NotImplementedError
 
     async def get_active_device_verify_key(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, device_id: DeviceID
     ) -> VerifyKey | UserGetActiveDeviceVerifyKeyBadOutcome:
         raise NotImplementedError
 
@@ -469,6 +470,7 @@ class BaseUserComponent:
 
     async def freeze_user(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         user_id: UserID | None,
         user_email: EmailAddress | None,
@@ -486,7 +488,7 @@ class BaseUserComponent:
         raise NotImplementedError
 
     async def list_frozen_users(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, device_id: DeviceID
     ) -> list[UserID] | UserListFrozenUsersBadOutcome:
         raise NotImplementedError
 
@@ -501,7 +503,8 @@ class BaseUserComponent:
         req: authenticated_cmds.latest.certificate_get.Req,
     ) -> authenticated_cmds.latest.certificate_get.Rep:
         outcome = await self.get_certificates(
-            client_ctx.organization_id,
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             common_after=req.common_after,
             sequester_after=req.sequester_after,
@@ -733,7 +736,11 @@ class BaseUserComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.list_frozen_users.Req,
     ) -> authenticated_cmds.latest.list_frozen_users.Rep:
-        outcome = await self.list_frozen_users(client_ctx.organization_id, client_ctx.device_id)
+        outcome = await self.list_frozen_users(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            device_id=client_ctx.device_id,
+        )
         match outcome:
             case list() as frozen_users:
                 return authenticated_cmds.latest.list_frozen_users.RepOk(frozen_users)

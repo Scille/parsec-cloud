@@ -137,6 +137,7 @@ class BaseVlobComponent:
 
     async def read_versions(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -146,6 +147,7 @@ class BaseVlobComponent:
 
     async def read_batch(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -156,6 +158,7 @@ class BaseVlobComponent:
 
     async def poll_changes(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -321,6 +324,7 @@ class BaseVlobComponent:
             return authenticated_cmds.latest.vlob_read_batch.RepTooManyElements()
 
         outcome = await self.read_batch(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,
@@ -359,6 +363,7 @@ class BaseVlobComponent:
             return authenticated_cmds.latest.vlob_read_versions.RepTooManyElements()
 
         outcome = await self.read_versions(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,
@@ -393,6 +398,7 @@ class BaseVlobComponent:
         req: authenticated_cmds.latest.vlob_poll_changes.Req,
     ) -> authenticated_cmds.latest.vlob_poll_changes.Rep:
         outcome = await self.poll_changes(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,

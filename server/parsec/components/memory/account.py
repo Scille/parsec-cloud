@@ -547,7 +547,7 @@ class MemoryAccountComponent(BaseAccountComponent):
         return res
 
     async def organization_self_list(
-        self, auth_method_id: AccountAuthMethodID
+        self, now: DateTime, auth_method_id: AccountAuthMethodID
     ) -> AccountOrganizationSelfList | AccountOrganizationListBadOutcome:
         match self._data.get_account_from_active_auth_method(auth_method_id=auth_method_id):
             case (account, _):
@@ -580,7 +580,7 @@ class MemoryAccountComponent(BaseAccountComponent):
                             current_profile=user.current_profile,
                             is_frozen=user.is_frozen,
                             organization_id=org.organization_id,
-                            organization_is_expired=org.is_expired,
+                            organization_is_expired=org.is_expired(now),
                             organization_user_profile_outsider_allowed=org.user_profile_outsider_allowed,
                             organization_active_users_limit=org.active_users_limit,
                         )

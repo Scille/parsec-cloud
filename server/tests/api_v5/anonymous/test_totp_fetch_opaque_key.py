@@ -21,6 +21,7 @@ async def _init_totp_and_create_opaque_key(
     org: MinimalorgRpcClients | CoolorgRpcClients, backend: Backend
 ) -> tuple[str, TOTPOpaqueKeyID, SecretKey]:
     totp_secret = await backend.totp.setup_get_secret(
+        now=DateTime.now(),
         organization_id=org.organization_id,
         author=org.alice.device_id,
     )
@@ -29,6 +30,7 @@ async def _init_totp_and_create_opaque_key(
     one_time_password = compute_totp_one_time_password(DateTime.now(), totp_secret)
 
     outcome = await backend.totp.setup_confirm(
+        now=DateTime.now(),
         organization_id=org.organization_id,
         author=org.alice.device_id,
         one_time_password=one_time_password,
@@ -36,6 +38,7 @@ async def _init_totp_and_create_opaque_key(
     assert outcome is None
 
     outcome = await backend.totp.create_opaque_key(
+        now=DateTime.now(),
         organization_id=org.organization_id,
         author=org.alice.device_id,
     )
@@ -94,6 +97,7 @@ async def test_anonymous_totp_fetch_opaque_key_invalid_one_time_password(
     # Frozen user
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
         user_email=None,
@@ -109,6 +113,7 @@ async def test_anonymous_totp_fetch_opaque_key_invalid_one_time_password(
     assert rep == anonymous_cmds.latest.totp_fetch_opaque_key.RepInvalidOneTimePassword()
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.alice.user_id,
         user_email=None,
@@ -132,6 +137,7 @@ async def test_anonymous_totp_fetch_opaque_key_setup_not_completed(
     minimalorg: MinimalorgRpcClients, backend: Backend
 ) -> None:
     totp_secret = await backend.totp.setup_get_secret(
+        now=DateTime.now(),
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
     )
@@ -140,6 +146,7 @@ async def test_anonymous_totp_fetch_opaque_key_setup_not_completed(
     one_time_password = compute_totp_one_time_password(DateTime.now(), totp_secret)
 
     outcome = await backend.totp.create_opaque_key(
+        now=DateTime.now(),
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
     )
@@ -187,6 +194,7 @@ async def test_anonymous_totp_fetch_opaque_key_throttled(
         minimalorg, backend
     )
     outcome = await backend.totp.create_opaque_key(
+        now=DateTime.now(),
         organization_id=minimalorg.organization_id,
         author=minimalorg.alice.device_id,
     )

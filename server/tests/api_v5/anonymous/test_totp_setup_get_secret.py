@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from parsec._parsec import AccessToken, UserID, anonymous_cmds
+from parsec._parsec import AccessToken, DateTime, UserID, anonymous_cmds
 from parsec.components.user import UserInfo
 from tests.common import (
     Backend,
@@ -68,6 +68,7 @@ async def test_anonymous_totp_setup_get_secret_bad_token(
     # Good token, but user is frozen
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.bob.user_id,
         user_email=None,
@@ -81,6 +82,7 @@ async def test_anonymous_totp_setup_get_secret_bad_token(
     assert rep == anonymous_cmds.latest.totp_setup_get_secret.RepBadToken()
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.bob.user_id,
         user_email=None,

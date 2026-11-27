@@ -333,7 +333,10 @@ class BaseAuthComponent:
 
         except KeyError:
             outcome = await self._get_authenticated_info(
-                organization_id, token.device_id, tos_acceptance_required=tos_acceptance_required
+                now,
+                organization_id,
+                token.device_id,
+                tos_acceptance_required=tos_acceptance_required,
             )
             match outcome:
                 case AuthenticatedAuthInfo() as auth_info:
@@ -387,6 +390,7 @@ class BaseAuthComponent:
 
         except KeyError:
             outcome = await self._get_editics_info(
+                now,
                 organization_id,
                 realm_id,
                 token.device_id,
@@ -407,12 +411,16 @@ class BaseAuthComponent:
         return auth_info
 
     async def _get_authenticated_info(
-        self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+        tos_acceptance_required: bool,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         raise NotImplementedError
 
     async def _get_editics_info(
-        self, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, realm_id: VlobID, device_id: DeviceID
     ) -> EditicsAuthInfo | AuthEditicsAuthBadOutcome:
         raise NotImplementedError
 

@@ -122,7 +122,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -215,7 +215,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -353,7 +353,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -471,7 +471,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmSelfPromoteToOwnerStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -588,7 +588,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -685,7 +685,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmUpdateArchivingStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -792,7 +792,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
 
         async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
@@ -937,6 +937,7 @@ class MemoryRealmComponent(BaseRealmComponent):
     @override
     async def get_keys_bundle(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -946,7 +947,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmGetKeysBundleBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmGetKeysBundleBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -1046,13 +1047,13 @@ class MemoryRealmComponent(BaseRealmComponent):
 
     @override
     async def list_info(
-        self, organization_id: OrganizationID, author: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, author: DeviceID
     ) -> list[RealmInfo] | RealmListInfoBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return RealmListInfoBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return RealmListInfoBadOutcome.ORGANIZATION_EXPIRED
 
         try:

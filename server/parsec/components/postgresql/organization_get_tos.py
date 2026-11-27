@@ -17,9 +17,9 @@ from parsec.components.postgresql.utils import (
 
 _q_get_tos = Q("""
 SELECT
-    is_expired,
     tos_updated_on,
-    tos_per_locale_urls
+    tos_per_locale_urls,
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
 FROM organization
 WHERE organization_id = $organization_id
 LIMIT 1
@@ -28,9 +28,10 @@ LIMIT 1
 
 async def organization_get_tos(
     conn: AsyncpgConnection,
+    now: DateTime,
     id: OrganizationID,
 ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
-    row = await conn.fetchrow(*_q_get_tos(organization_id=id.str))
+    row = await conn.fetchrow(*_q_get_tos(organization_id=id.str, now=now))
 
     if not row:
         return OrganizationGetTosBadOutcome.ORGANIZATION_NOT_FOUND

@@ -128,7 +128,7 @@ async def shamir_setup(
     # 1) Query the database to get all info about org/device/user
     #    and lock the common and shamir topics
 
-    match await auth_and_lock_common_read(conn, organization_id, author):
+    match await auth_and_lock_common_read(conn, now, organization_id, author):
         case AuthAndLockCommonOnlyData(
             organization_internal_id=organization_internal_id,
             user_id=author_user_id,

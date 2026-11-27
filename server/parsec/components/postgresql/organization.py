@@ -71,7 +71,6 @@ def _make_q_get_organization(for_update: bool = False) -> Q:
 SELECT
     bootstrap_token,
     root_verify_key,
-    is_expired,
     _expired_on AS expired_on,
     _bootstrapped_on AS bootstrapped_on,
     _created_on AS created_on,
@@ -250,7 +249,6 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             organization_id=id,
             bootstrap_token=bootstrap_token,
             root_verify_key=rvk,
-            is_expired=row["is_expired"],
             expired_on=row["expired_on"],
             created_on=row["created_on"],
             bootstrapped_on=row["bootstrapped_on"],
@@ -300,7 +298,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @transaction
     async def stats(
         self,
-        connection: AsyncpgConnection,
+        conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         at: DateTime | None = None,
@@ -354,9 +353,9 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     @override
     @no_transaction
     async def get_tos(
-        self, conn: AsyncpgConnection, id: OrganizationID
+        self, conn: AsyncpgConnection, now: DateTime, id: OrganizationID
     ) -> TermsOfService | OrganizationGetTosBadOutcome | None:
-        return await organization_get_tos(conn, id)
+        return await organization_get_tos(conn, now, id)
 
     @override
     @no_transaction

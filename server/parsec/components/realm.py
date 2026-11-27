@@ -753,6 +753,7 @@ class BaseRealmComponent:
 
     async def get_keys_bundle(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -771,7 +772,7 @@ class BaseRealmComponent:
         raise NotImplementedError
 
     async def list_info(
-        self, organization_id: OrganizationID, author: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, author: DeviceID
     ) -> list[RealmInfo] | RealmListInfoBadOutcome:
         raise NotImplementedError
 
@@ -1253,6 +1254,7 @@ class BaseRealmComponent:
         req: authenticated_cmds.latest.realm_get_keys_bundle.Req,
     ) -> authenticated_cmds.latest.realm_get_keys_bundle.Rep:
         outcome = await self.get_keys_bundle(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             realm_id=req.realm_id,
@@ -1293,6 +1295,7 @@ class BaseRealmComponent:
         req: authenticated_cmds.latest.realm_list_info.Req,
     ) -> authenticated_cmds.latest.realm_list_info.Rep:
         outcome = await self.list_info(
+            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )

@@ -75,6 +75,7 @@ async def test_authenticated_block_create_ok(
     assert rep == authenticated_cmds.latest.block_create.RepOk()
 
     content = await backend.block.read(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         realm_id=realm_id,
@@ -129,6 +130,7 @@ async def test_authenticated_block_create_realm_not_found(
     # is already checked below with the test_dump_blocks call.
     # Anyway, let's leave it as an extra cheap check.
     content = await backend.block.read(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         realm_id=realm_id,
@@ -228,6 +230,7 @@ async def test_authenticated_block_create_store_unavailable(
     # is already checked below with the test_dump_blocks call.
     # Anyway, let's leave it as an extra cheap check.
     content = await backend.block.read(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         realm_id=realm_id,

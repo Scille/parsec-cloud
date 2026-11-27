@@ -203,7 +203,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
         async with (
@@ -289,7 +289,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
         async with (
@@ -368,7 +368,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_EXPIRED
 
         async with (
@@ -469,7 +469,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -518,13 +518,13 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     @override
     async def list(
-        self, organization_id: OrganizationID, author: DeviceID
+        self, now: DateTime, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -590,13 +590,13 @@ class MemoryInviteComponent(BaseInviteComponent):
 
     @override
     async def info_as_invited(
-        self, organization_id: OrganizationID, token: AccessToken
+        self, now: DateTime, organization_id: OrganizationID, token: AccessToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -639,6 +639,7 @@ class MemoryInviteComponent(BaseInviteComponent):
     @override
     async def shamir_recovery_reveal(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         token: AccessToken,
         reveal_token: AccessToken,
@@ -647,7 +648,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -760,7 +761,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -801,7 +802,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -842,7 +843,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -900,7 +901,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -954,7 +955,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteGreeterStepBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterStepBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -1022,7 +1023,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteClaimerStepBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
 
         try:
@@ -1082,7 +1083,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             org = self._data.organizations[organization_id]
         except KeyError:
             return InviteCompleteBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteCompleteBadOutcome.ORGANIZATION_EXPIRED
 
         try:

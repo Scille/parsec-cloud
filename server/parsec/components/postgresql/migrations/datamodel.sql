@@ -139,7 +139,6 @@ CREATE TABLE organization (
     user_profile_outsider_allowed BOOLEAN NOT NULL,
     -- NULL if no limit
     active_users_limit INTEGER,
-    is_expired BOOLEAN NOT NULL,
     -- NULL if not bootstrapped
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL,

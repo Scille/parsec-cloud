@@ -25,7 +25,7 @@ from parsec.components.postgresql.utils import Q
 _q_check_organization = Q("""
 SELECT
     _id,
-    is_expired
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
 FROM organization
 WHERE
     organization_id = $organization_id
@@ -95,6 +95,7 @@ FROM my_enrollment
 
 async def async_enrollment_info(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     enrollment_id: AsyncEnrollmentID,
 ) -> AsyncEnrollmentInfo | AsyncEnrollmentInfoBadOutcome:
@@ -103,6 +104,7 @@ async def async_enrollment_info(
     org_row = await conn.fetchrow(
         *_q_check_organization(
             organization_id=organization_id.str,
+            now=now,
         )
     )
     assert org_row is not None

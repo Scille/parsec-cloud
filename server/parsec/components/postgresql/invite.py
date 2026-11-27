@@ -1309,7 +1309,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -1404,7 +1404,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -1503,7 +1503,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_NOT_FOUND
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteNewForShamirRecoveryBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -1646,7 +1646,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -1703,14 +1703,18 @@ class PGInviteComponent(BaseInviteComponent):
     @override
     @transaction
     async def list(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
     ) -> list[Invitation] | InviteListBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -1792,7 +1796,11 @@ class PGInviteComponent(BaseInviteComponent):
         return invitations
 
     async def _info_as_invited(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: AccessToken,
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         match await self.organization._get(conn, organization_id):
             case Organization() as organization:
@@ -1800,7 +1808,7 @@ class PGInviteComponent(BaseInviteComponent):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
 
         invitation_info = await self.get_invitation(conn, organization_id, token)
@@ -1852,15 +1860,20 @@ class PGInviteComponent(BaseInviteComponent):
     @override
     @transaction
     async def info_as_invited(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: AccessToken
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: AccessToken,
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
-        return await self._info_as_invited(conn, organization_id, token)
+        return await self._info_as_invited(conn, now, organization_id, token)
 
     @override
     @transaction
     async def shamir_recovery_reveal(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         token: AccessToken,
         reveal_token: AccessToken,
@@ -1871,7 +1884,7 @@ class PGInviteComponent(BaseInviteComponent):
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if organization.is_expired:
+        if organization.is_expired(now):
             return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED
 
         invitation_info = await self.get_invitation(conn, organization_id, token)
@@ -2288,7 +2301,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -2338,7 +2351,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._get_profile_for_user(conn, organization_id, greeter):
@@ -2387,7 +2400,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -2454,7 +2467,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
         # Lock common topic because we need it later to check if the greeter is allowed
@@ -2527,7 +2540,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteGreeterStepBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteGreeterStepBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
@@ -2604,7 +2617,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteClaimerStepBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
 
         # Lock common topic because we need it later to check if the greeter is allowed
@@ -2683,7 +2696,7 @@ class PGInviteComponent(BaseInviteComponent):
                 pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return InviteCompleteBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
+        if org.is_expired(now):
             return InviteCompleteBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):

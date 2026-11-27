@@ -330,6 +330,7 @@ async def test_user_revoked_frozen(
     # Frozen user
 
     outcome = await backend.user.freeze_user(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         user_id=coolorg.bob.user_id,
         user_email=None,

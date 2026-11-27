@@ -46,7 +46,7 @@ _q_anonymous_get_info = Q(
     """
 SELECT
     _id AS organization_internal_id,
-    is_expired AS organization_is_expired
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS organization_is_expired
 FROM organization
 WHERE organization_id = $organization_id
 -- Note we don't filter out non-bootstrapped organization here, this is because
@@ -59,7 +59,7 @@ _q_invited_get_info = Q(
     """
 SELECT
     _id AS organization_internal_id,
-    is_expired AS organization_is_expired,
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS organization_is_expired,
     (
         SELECT invitation._id FROM invitation
         WHERE invitation.organization = organization._id AND invitation.token = $token LIMIT 1
@@ -86,8 +86,8 @@ _q_authenticated_get_info = Q(
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired,
-        tos_updated_on
+        tos_updated_on,
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -160,7 +160,7 @@ _q_editics_get_info = Q(
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -263,7 +263,9 @@ class PGAuthComponent(BaseAuthComponent):
         spontaneous_bootstrap: bool,
     ) -> AnonymousAuthInfo | AuthAnonymousAuthBadOutcome:
         while True:
-            row = await conn.fetchrow(*_q_anonymous_get_info(organization_id=organization_id.str))
+            row = await conn.fetchrow(
+                *_q_anonymous_get_info(organization_id=organization_id.str, now=now)
+            )
             if row is None:
                 # Organization doesn't exist yet, may it's time to create it !
 
@@ -324,7 +326,7 @@ class PGAuthComponent(BaseAuthComponent):
         token: AccessToken,
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         row = await conn.fetchrow(
-            *_q_invited_get_info(organization_id=organization_id.str, token=token.hex)
+            *_q_invited_get_info(organization_id=organization_id.str, token=token.hex, now=now)
         )
         if not row:
             return AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
@@ -378,12 +380,15 @@ class PGAuthComponent(BaseAuthComponent):
     async def _get_authenticated_info(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         device_id: DeviceID,
         tos_acceptance_required: bool,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         row = await conn.fetchrow(
-            *_q_authenticated_get_info(organization_id=organization_id.str, device_id=device_id)
+            *_q_authenticated_get_info(
+                organization_id=organization_id.str, device_id=device_id, now=now
+            )
         )
         assert row is not None
 
@@ -460,6 +465,7 @@ class PGAuthComponent(BaseAuthComponent):
     async def _get_editics_info(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         organization_id: OrganizationID,
         realm_id: VlobID,
         device_id: DeviceID,
@@ -469,6 +475,7 @@ class PGAuthComponent(BaseAuthComponent):
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 device_id=device_id,
+                now=now,
             )
         )
         assert row is not None

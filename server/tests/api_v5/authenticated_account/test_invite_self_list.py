@@ -54,7 +54,11 @@ async def test_authenticated_account_invite_self_list_ok(
 
     # Frozen should have no effect (but it is a common mistake to confuse it with revoked)
     await backend.user.freeze_user(
-        coolorg.organization_id, user_id=coolorg.alice.user_id, user_email=None, frozen=True
+        DateTime.now(),
+        coolorg.organization_id,
+        user_id=coolorg.alice.user_id,
+        user_email=None,
+        frozen=True,
     )
 
     # Bob has no invitation...

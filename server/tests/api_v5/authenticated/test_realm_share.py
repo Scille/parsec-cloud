@@ -153,6 +153,7 @@ async def test_authenticated_realm_share_ok(
     assert mallory_realms[coolorg.wksp1_id] == role
 
     keys_bundle_info = await backend.realm.get_keys_bundle(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.mallory.device_id,
         realm_id=coolorg.wksp1_id,

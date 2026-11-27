@@ -114,6 +114,7 @@ async def test_ok(
 
     async def _get_certificates() -> CertificatesBundle:
         outcome = await backend.user.get_certificates(
+            now=DateTime.now(),
             organization_id=workspace_archived_org.organization_id,
             author=workspace_archived_org.alice.device_id,
             common_after=None,
@@ -146,6 +147,7 @@ async def test_ok(
     # Check deletion
     if active_device_id:
         await backend.block.read(
+            now=DateTime.now(),
             organization_id=workspace_archived_org.organization_id,
             realm_id=wksp_id,
             author=active_device_id,

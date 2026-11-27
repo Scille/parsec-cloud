@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import assert_never
 
 from parsec._parsec import (
+    DateTime,
     EmailAddress,
     HumanHandle,
     OrganizationID,
@@ -27,7 +28,7 @@ from parsec.events import (
 _q_get_organization = Q("""
 SELECT
     _id AS organization_internal_id,
-    is_expired AS organization_expired
+    (_expired_on IS NOT NULL AND _expired_on <= $now) AS organization_expired
 FROM organization
 WHERE
     organization_id = $organization_id
@@ -82,6 +83,7 @@ RETURNING
 
 async def user_freeze_user(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     user_id: UserID | None,
     user_email: EmailAddress | None,
@@ -93,6 +95,7 @@ async def user_freeze_user(
     row = await conn.fetchrow(
         *_q_get_organization(
             organization_id=organization_id.str,
+            now=now,
         )
     )
     if row is None:

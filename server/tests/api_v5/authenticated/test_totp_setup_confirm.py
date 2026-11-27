@@ -11,7 +11,7 @@ async def test_authenticated_totp_setup_confirm_ok(
     minimalorg: MinimalorgRpcClients, backend: Backend
 ) -> None:
     totp_secret = await backend.totp.setup_get_secret(
-        minimalorg.organization_id, minimalorg.alice.device_id
+        DateTime.now(), minimalorg.organization_id, minimalorg.alice.device_id
     )
     assert isinstance(totp_secret, bytes)
 

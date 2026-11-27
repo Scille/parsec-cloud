@@ -481,6 +481,7 @@ class Backend:
                     assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventFreezeUser):
                 outcome = await self.user.freeze_user(
+                    now=DateTime.now(),
                     organization_id=org_id,
                     user_id=event.user,
                     user_email=None,

@@ -36,7 +36,7 @@ _Q_AUTH_AND_LOCK_COMMON_ONLY_TEMPLATE = """
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired,
+        (_expired_on IS NOT NULL AND _expired_on <= $now) AS is_expired,
         sequester_authority_certificate IS NOT NULL AS is_sequestered
     FROM organization
     WHERE
@@ -101,6 +101,7 @@ _q_auth_and_lock_common_read = Q(
 
 async def auth_and_lock_common_write(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> AuthAndLockCommonOnlyData | AuthAndLockCommonOnlyBadOutcome:
@@ -128,12 +129,14 @@ async def auth_and_lock_common_write(
         _q_auth_and_lock_common_write(
             organization_id=organization_id.str,
             device_id=author,
+            now=now,
         ),
     )
 
 
 async def auth_and_lock_common_read(
     conn: AsyncpgConnection,
+    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
 ) -> AuthAndLockCommonOnlyData | AuthAndLockCommonOnlyBadOutcome:
@@ -161,6 +164,7 @@ async def auth_and_lock_common_read(
         _q_auth_and_lock_common_read(
             organization_id=organization_id.str,
             device_id=author,
+            now=now,
         ),
     )
 
