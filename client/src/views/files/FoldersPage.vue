@@ -1669,6 +1669,13 @@ async function startSearch(pattern: string): Promise<void> {
 
 .folder-container div:not(.no-files-content div) {
   height: 100%;
+
+  &.drop-zone {
+    @include ms.responsive-breakpoint('sm') {
+      height: auto;
+      min-height: 100%;
+    }
+  }
 }
 
 .counter-text {

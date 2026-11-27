@@ -16,12 +16,12 @@
     />
 
     <div
-      v-show="isActive && props.showDropMessage"
+      v-if="isActive && props.showDropMessage"
       class="drop-message"
     >
       <ms-image
-        :image="DocumentImport"
-        class="restore-password-header-img"
+        :image="ImportFile"
+        class="drop-message__image"
       />
       <ion-text class="drop-message__text">
         {{ $msTranslate('FoldersPage.ImportFile.dropInstructions') }}
@@ -31,9 +31,10 @@
 </template>
 
 <script setup lang="ts">
+import ImportFile from '@/assets/images/import-file.svg?raw';
 import { getFilesFromDrop } from '@/components/files/utils';
 import { IonText } from '@ionic/vue';
-import { DocumentImport, MsImage } from 'megashark-lib';
+import { MsImage } from 'megashark-lib';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineExpose({
@@ -147,8 +148,22 @@ function reset(): void {
     &.drop-active {
       outline: 1px dashed ms.color('border-brand-default');
       border-radius: ms.radius('lg');
+
+      &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: ms.color('surface-brand-default');
+        opacity: ms.opacity('1');
+      }
     }
   }
+}
+
+.drop-zone .drop-zone > .drop-zone-dashed::before,
+.drop-zone:has(.drop-zone-active) > .drop-zone-dashed::before {
+  display: none;
 }
 
 .drop-message {
@@ -157,19 +172,29 @@ function reset(): void {
   bottom: 2em;
   transform: translate(-50%, -50%);
   width: fit-content;
-  background-color: ms.color('surface-base-page-secondary');
-  border: ms.border('thin') solid ms.color('border-neutral-default-subtle-hover');
-  border-radius: ms.radius('lg');
-  box-shadow: ms.shadow('strong');
-  padding: ms.spacing('padding-2xl');
+  background-color: ms.color('surface-base-default');
+  border: ms.border('thin') solid ms.color('border-brand-default-subtle');
+  border-radius: ms.radius('xl');
+  box-shadow: ms.shadow('elevation-2xl');
+  padding: ms.spacing('padding-4xl') ms.spacing('padding-4xl');
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: ms.spacing('gap-lg');
-  color: ms.color('text-base-body');
-  z-index: 10;
+  color: ms.color('text-base-description');
+  z-index: 1101;
+
+  @include ms.responsive-breakpoint('sm') {
+    position: fixed;
+  }
+
+  &__image {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
 
   &__text {
-    @include ms.font('body-md-medium');
+    @include ms.font('body-lg-medium');
   }
 }
 </style>
