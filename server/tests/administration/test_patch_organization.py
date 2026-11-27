@@ -43,6 +43,9 @@ async def test_get_organization_auth(
         "bad_value_realm_minimum_archiving_period_before_deletion",
         "bad_type_tos",
         "bad_value_tos",
+        "bad_type_expired_on",
+        "bad_value_expired_on",
+        "bad_data_is_expired_and_expired_on",
     ),
 )
 async def test_bad_data(
@@ -72,6 +75,14 @@ async def test_bad_data(
             body_args = {"json": {"tos": "{}"}}
         case "bad_value_tos":
             body_args = {"json": {"tos": {"fr": 42}}}
+        case "bad_type_expired_on":
+            # Only a real RFC 3339 date is valid !
+            body_args = {"json": {"expired_on": "not a date"}}
+        case "bad_value_expired_on":
+            body_args = {"json": {"expired_on": 42}}
+        case "bad_data_is_expired_and_expired_on":
+            # `is_expired` and `expired_on` are mutually exclusive
+            body_args = {"json": {"is_expired": True, "expired_on": "2026-01-01T00:00:00Z"}}
         case unknown:
             assert False, unknown
 
@@ -96,6 +107,7 @@ async def test_bad_method(
 
 class PatchOrganizationParams(TypedDict):
     is_expired: NotRequired[bool]
+    expired_on: NotRequired[str | None]
     active_user_limit: NotRequired[int]
     user_profile_outsider_allowed: NotRequired[bool]
     tos: NotRequired[dict[TosLocale, TosUrl]]
@@ -106,11 +118,20 @@ class PatchOrganizationParams(TypedDict):
     (
         {},
         {"is_expired": True},
+        {"expired_on": "2026-01-01T00:00:00Z"},
+        {"expired_on": None},
         {"active_users_limit": 1},
         {"user_profile_outsider_allowed": False},
         {"realm_minimum_archiving_period_before_deletion": 1},
         {
             "is_expired": False,
+            "active_users_limit": None,
+            "user_profile_outsider_allowed": True,
+            "realm_minimum_archiving_period_before_deletion": 0,
+            "tos": {"en_HK": "https://parsec.invalid/tos_en"},
+        },
+        {
+            "expired_on": None,
             "active_users_limit": None,
             "user_profile_outsider_allowed": True,
             "realm_minimum_archiving_period_before_deletion": 0,
@@ -135,11 +156,27 @@ async def test_ok(
     dump = await backend.organization.list_organizations()
     org = await backend.organization.get(coolorg.organization_id)
     assert isinstance(org, Organization)
-    is_expired = params.get("is_expired", False)
-    assert (is_expired and org.expired_on is not None) or (
-        not is_expired and org.expired_on is None
-    )
-    assert dump[coolorg.organization_id].is_expired(DateTime.now()) is is_expired
+    # The two fields are mutually exclusive, and `is_expired: true` is equivalent
+    # to `expired_on: <now>`, while `expired_on: None` / `is_expired: false` cancels
+    # the expiration.
+    expected_expired_on: DateTime | None
+    if params.get("is_expired", False):
+        assert "expired_on" not in params
+        assert org.expired_on is not None
+        expected_expired_on = org.expired_on
+    elif "expired_on" in params:
+        raw_expected = params["expired_on"]
+        if raw_expected is None:
+            expected_expired_on = None
+            assert org.expired_on is None
+        else:
+            expected_expired_on = DateTime.from_rfc3339(raw_expected)
+            assert org.expired_on == expected_expired_on
+    else:
+        assert org.expired_on is None
+        expected_expired_on = None
+    expected_is_expired = expected_expired_on is not None and expected_expired_on <= DateTime.now()
+    assert dump[coolorg.organization_id].is_expired(DateTime.now()) is expected_is_expired
     assert dump[coolorg.organization_id] == OrganizationDump(
         organization_id=coolorg.organization_id,
         created_on=org.created_on,
@@ -200,7 +237,7 @@ async def test_expire_and_cancel_expire(
         dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired(DateTime.now()) is True
 
-        # Cancel expiration
+        # Cancel expiration (using the legacy `is_expired: false` spelling)
 
         response = await administration_client.patch(
             url,
@@ -227,6 +264,42 @@ async def test_expire_and_cancel_expire(
 
         dump = await backend.organization.list_organizations()
         assert dump[coolorg.organization_id].is_expired(DateTime.now()) is False
+
+        # Schedule a future-dated expiration: the organization is not expired
+        # yet (no event), and auto-expires when the date becomes due
+
+        scheduled_on = DateTime.now().add(minutes=1)
+        response = await administration_client.patch(
+            url,
+            json={"expired_on": scheduled_on.to_rfc3339()},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        org = await backend.organization.get(coolorg.organization_id)
+        assert isinstance(org, Organization)
+        assert org.expired_on == scheduled_on
+        dump = await backend.organization.list_organizations()
+        assert dump[coolorg.organization_id].is_expired(DateTime.now()) is False
+
+        # Once due, the organization is considered expired (without any new
+        # PATCH, the derivation is date-based)
+
+        now_after_due = scheduled_on.add(seconds=1)
+        assert dump[coolorg.organization_id].is_expired(now_after_due) is True
+
+        # Cancel the scheduled expiration
+
+        response = await administration_client.patch(
+            url,
+            json={"expired_on": None},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        org = await backend.organization.get(coolorg.organization_id)
+        assert isinstance(org, Organization)
+        assert org.expired_on is None
 
 
 async def test_set_unset_tos(

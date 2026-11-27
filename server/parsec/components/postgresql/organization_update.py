@@ -26,15 +26,15 @@ from parsec.types import Unset, UnsetType
 
 @lru_cache
 def _q_update_factory(
-    with_is_expired: bool,
+    with_expired_on: bool,
     with_active_users_limit: bool,
     with_user_profile_outsider_allowed: bool,
     with_realm_minimum_archiving_period_before_deletion: bool,
     with_tos: bool,
 ) -> Q:
     fields = []
-    if with_is_expired:
-        fields.append("_expired_on = (CASE WHEN $is_expired THEN $now ELSE NULL END)")
+    if with_expired_on:
+        fields.append("_expired_on = $expired_on")
     if with_active_users_limit:
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:
@@ -62,13 +62,13 @@ async def organization_update(
     conn: AsyncpgConnection,
     now: DateTime,
     id: OrganizationID,
-    is_expired: UnsetType | bool = Unset,
+    expired_on: UnsetType | DateTime | None = Unset,
     active_users_limit: UnsetType | ActiveUsersLimit = Unset,
     user_profile_outsider_allowed: UnsetType | bool = Unset,
     realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
     tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset,
 ) -> OrganizationUpdateBadOutcome | None:
-    with_is_expired = is_expired is not Unset
+    with_expired_on = expired_on is not Unset
     with_active_users_limit = active_users_limit is not Unset
     with_user_profile_outsider_allowed = user_profile_outsider_allowed is not Unset
     with_realm_minimum_archiving_period_before_deletion = (
@@ -77,7 +77,7 @@ async def organization_update(
     with_tos = tos is not Unset
 
     if (
-        not with_is_expired
+        not with_expired_on
         and not with_active_users_limit
         and not with_user_profile_outsider_allowed
         and not with_realm_minimum_archiving_period_before_deletion
@@ -90,8 +90,8 @@ async def organization_update(
     # `now` is always needed given the RETURNING clause computes the
     # organization expiration status at the time of the update.
     fields["now"] = now
-    if with_is_expired:
-        fields["is_expired"] = is_expired
+    if with_expired_on:
+        fields["expired_on"] = expired_on
     if with_active_users_limit:
         assert isinstance(active_users_limit, ActiveUsersLimit)
         fields["active_users_limit"] = active_users_limit.to_maybe_int()
@@ -110,7 +110,7 @@ async def organization_update(
             fields["tos_per_locale_urls"] = tos
 
     q = _q_update_factory(
-        with_is_expired=with_is_expired,
+        with_expired_on=with_expired_on,
         with_active_users_limit=with_active_users_limit,
         with_user_profile_outsider_allowed=with_user_profile_outsider_allowed,
         with_realm_minimum_archiving_period_before_deletion=with_realm_minimum_archiving_period_before_deletion,

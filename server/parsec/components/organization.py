@@ -324,7 +324,8 @@ class BaseOrganizationComponent:
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
-        is_expired: UnsetType | bool = Unset,
+        # `None` stands for "not expired" (i.e. cancel expiration / unschedule)
+        expired_on: UnsetType | DateTime | None = Unset,
         # `None` stands for "no limit"
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,

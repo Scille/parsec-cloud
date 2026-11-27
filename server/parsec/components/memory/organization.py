@@ -353,7 +353,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         now: DateTime,
         id: OrganizationID,
-        is_expired: UnsetType | bool = Unset,
+        expired_on: UnsetType | DateTime | None = Unset,
         active_users_limit: UnsetType | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: UnsetType | bool = Unset,
         realm_minimum_archiving_period_before_deletion: UnsetType | int = Unset,
@@ -367,8 +367,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         except KeyError:
             return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if is_expired is not Unset:
-            org.expired_on = now if is_expired else None
+        if expired_on is not Unset:
+            org.expired_on = expired_on
         if active_users_limit is not Unset:
             org.active_users_limit = active_users_limit
         if user_profile_outsider_allowed is not Unset:

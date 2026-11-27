@@ -16,7 +16,7 @@ from typing import (
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt
+from pydantic import BaseModel, ConfigDict, Field, NonNegativeInt, model_validator
 
 from parsec._parsec import (
     AccessToken,
@@ -320,7 +320,8 @@ class PatchOrganizationOut(BaseModel):
 
 class PatchOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    is_expired: bool | UnsetType = Field(Unset, examples=[False])
+    is_expired: bool | UnsetType = Field(Unset, examples=[False], deprecated=True)
+    expired_on: DateTime | UnsetType | None = Field(Unset, examples=["2027-01-01T00:00:00Z"])
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
@@ -330,6 +331,12 @@ class PatchOrganizationIn(BaseModel):
         Unset, examples=[2592000]
     )
     tos: dict[TosLocale, TosUrl] | UnsetType | None = Field(Unset, examples=[tos_example])
+
+    @model_validator(mode="after")
+    def _check_is_expired_and_expired_on_exclusive(self) -> PatchOrganizationIn:
+        if self.is_expired is not Unset and self.expired_on is not Unset:
+            raise ValueError("`is_expired` and `expired_on` are mutually exclusive")
+        return self
 
 
 @administration_router.patch(
@@ -347,18 +354,31 @@ async def administration_patch_organization(
     """
     The organization status can be updated with:
 
-    - `is_expired` whether the organization has been expired or not. Users are not allowed to connect to an expired organization.
+    - `is_expired` (deprecated, use `expired_on` instead) whether the organization has been
+    expired or not. Users are not allowed to connect to an expired organization.
+    - `expired_on` when the organization is/will be expired (`null` to cancel). Note a
+    future-dated expiration is "scheduled": the organization auto-expires when the date
+    is due.
+
+    `is_expired` and `expired_on` are mutually exclusive: providing both is a bad request.
 
     The organization configuration is described by the same options used during organization creation.
 
     Fields that you do not want to be updated should be omitted from the request.
     """
     backend: Backend = request.app.state.backend
+    now = DateTime.now()
+
+    expired_on: UnsetType | DateTime | None
+    if body.is_expired is not Unset:
+        expired_on = now if body.is_expired else None
+    else:
+        expired_on = body.expired_on
 
     outcome = await backend.organization.update(
-        now=DateTime.now(),
+        now=now,
         id=organization_id,
-        is_expired=body.is_expired,
+        expired_on=expired_on,
         active_users_limit=body.active_users_limit,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         realm_minimum_archiving_period_before_deletion=body.realm_minimum_archiving_period_before_deletion,
