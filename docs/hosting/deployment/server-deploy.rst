@@ -425,14 +425,14 @@ Start the server
 Running behind a reverse proxy
 ==============================
 
-To run Parsec behind a reverse proxy you will need to add the option ``--proxy-trusted-address`` or set the environment variable ``PARSEC_PROXY_TRUSTED_ADDRESS`` to the address of the reverse proxy (e.g.: ``localhost``).
+To run Parsec behind a reverse proxy you will need to add the option ``--proxy-trusted-addresses`` or set the environment variable ``PARSEC_PROXY_TRUSTED_ADDRESSES`` to the address of the reverse proxy (e.g.: ``localhost``).
 
 If this option is not set, the gunicorn/uvicorn ``FORWARDED_ALLOW_IPS`` environment variable is used, defaulting to trusting only localhost if absent.
 
 .. tip::
 
   You can provide multiple addresses by separating them with a comma.
-  For example: ``--proxy-trusted-address '::1,10.0.0.42'`` will trust the addresses ``::1`` and ``10.0.0.42``
+  For example: ``--proxy-trusted-addresses '::1,10.0.0.42'`` will trust the addresses ``::1`` and ``10.0.0.42``
 
 An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the Docker Compose file <doc_hosting_deployment_the_docker_compose_file>`:
 
@@ -454,21 +454,39 @@ and proxy the requests to the Parsec Server.
 
    .. literalinclude:: parsec-nginx.conf
      :language: nginx
-     :emphasize-lines: 10,31-34,37,40,47-50,53,56
+     :emphasize-lines: 14-16,22,24,52-58,63,70-76,81
      :linenos:
 
 The important takeaways are:
 
-- Set the ``X-Forwarded-For``, ``X-Forwarded-Proto``, ``X-Forwarded-Host`` and ``X-Forwarded-Port`` headers.
+- Set the ``X-Forwarded-For``, ``X-Forwarded-Proto`` and ``X-Forwarded-Port`` headers.
 
   - Currently, Parsec only uses the ``X-Forwarded-For`` and ``X-Forwarded-Proto`` headers,
     but it is better to set all of them to avoid any issue.
 
-- Remove the ``Forwarded`` header.
+- Clear the ``Forwarded`` and ``X-Forwarded-Host`` headers.
 
-  - The ``Forwarded`` header (`RFC-7239 <https://datatracker.ietf.org/doc/html/rfc7239>`_) is not used by Parsec, but it may be in the future.
+  - Neither is used by Parsec, but they may be in the future: clearing them
+    (i.e. passing them as empty to the Parsec Server) ensures a malicious request
+    cannot forge their values.
 
-- Set the header ``host`` to the accessible address. Here we force the value to be ``app.parsec.localhost``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
+- Forward the original ``Host`` header unchanged.
+
+  - The Parsec Server relies on the ``Host`` header to know which domain the request
+    is addressed to: in particular, it is used to only serve the
+    :ref:`Editics <doc_hosting_deployment_editics>` pages on the editics domains.
+  - Do not force the header to a fixed value: a deployment reachable from several
+    domains (e.g. the main domain and the editics domains) would break, since all
+    requests would appear as addressed to a single domain.
+
+- Reject the requests whose ``Host`` header doesn't match any declared domain.
+
+  - Since the ``Host`` header is attacker-controlled, it must not be blindly forwarded:
+    here the catch-all ``server`` block (marked ``default_server``) rejects with a 400 error
+    any request whose ``Host`` header doesn't match one of the declared ``server_name`` values,
+    and ``ssl_reject_handshake`` does the same during the TLS handshake based on the SNI.
+  - Hence the reverse proxy configuration must declare one ``server`` block per domain
+    the Parsec Server is reachable from.
 
 
 TLS Recommendation

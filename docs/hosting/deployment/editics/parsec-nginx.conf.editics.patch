@@ -1,8 +1,8 @@
 diff --git a/docs/hosting/deployment/parsec-nginx.conf b/docs/hosting/deployment/parsec-nginx.conf
 --- a/docs/hosting/deployment/parsec-nginx.conf
 +++ b/docs/hosting/deployment/parsec-nginx.conf
-@@ -56,4 +56,35 @@ http {
-             proxy_set_header Host app.parsec.localhost;
+@@ -81,4 +81,38 @@ http {
+             proxy_set_header Host $http_host;
          }
      }
 +
@@ -26,15 +26,17 @@ diff --git a/docs/hosting/deployment/parsec-nginx.conf b/docs/hosting/deployment
 +            # Add X-Forwarded headers to the proxied request
 +            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
 +            proxy_set_header X-Forwarded-Proto $scheme;
-+            proxy_set_header X-Forwarded-Host $host;
 +            proxy_set_header X-Forwarded-Port $server_port;
 +
-+            # Remove the Forwarded header
++            # Clear headers that may have been set by a malicious request
 +            proxy_set_header Forwarded "";
++            proxy_set_header X-Forwarded-Host "";
 +
-+            # Overwrite the Host header
-+            # (the Parsec Server relies on it to only serve Editics on this domain)
-+            proxy_set_header Host editics.parsec.localhost;
++            # Preserve the original Host header: the Parsec Server relies on it
++            # to identify which domain (i.e. main vs editics) the request is
++            # addressed to, and hence to only serve Editics on this domain.
++            # Requests with an unknown Host are rejected by the catch-all server.
++            proxy_set_header Host $http_host;
 +        }
 +    }
  }
