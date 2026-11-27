@@ -139,7 +139,6 @@ async def test_ok(
     assert (is_expired and org.expired_on is not None) or (
         not is_expired and org.expired_on is None
     )
-    # Keep coverage of the derived `is_expired` method (replacing the removed field)
     assert dump[coolorg.organization_id].is_expired(DateTime.now()) is is_expired
     assert dump[coolorg.organization_id] == OrganizationDump(
         organization_id=coolorg.organization_id,
