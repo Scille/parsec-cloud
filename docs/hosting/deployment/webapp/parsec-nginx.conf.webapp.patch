@@ -1,18 +1,48 @@
 diff --git a/docs/hosting/deployment/parsec-nginx.conf b/docs/hosting/deployment/parsec-nginx.conf
-index 10fe651e02..bf2080be9c 100644
 --- a/docs/hosting/deployment/parsec-nginx.conf
 +++ b/docs/hosting/deployment/parsec-nginx.conf
-@@ -17,6 +17,13 @@ http {
-         ssl_certificate     /certs/proxy.crt;
-         ssl_certificate_key /certs/proxy.key;
- 
-+        include /etc/nginx/mime.types;
+@@ -5,6 +5,10 @@
+
+
+ http {
++    # Cache for the web app assets (see the `/client/assets/` location)
++    proxy_cache_path /var/cache/nginx/parsec keys_zone=parsec_static:10m
++                     max_size=1g inactive=30d use_temp_path=off;
 +
-+        location /client/.* {
-+            alias /var/www/parsec-web/;
-+            try_files $uri /client/index.html;
+     # Catch-all server: reject the requests whose `Host` header doesn't match
+     # any of the `server_name`s declared in the other server blocks.
+     # This is required for security: the Parsec Server relies on the `Host`
+@@ -38,6 +42,33 @@
+         ssl_certificate     /run/secrets/proxy-pem-crt;
+         ssl_certificate_key /run/secrets/proxy-pem-key;
+
++        # Serve the web app assets from the nginx cache: they have cache-busting
++        # names (content hash in the file name), so a cached response stays valid
++        # forever, and the load on the Parsec Server is reduced.
++        # Note the Parsec Server serves them pre-compressed (brotli) depending on
++        # the client's `Accept-Encoding`, and nginx caches are not `Vary`-aware,
++        # hence `Accept-Encoding` must be part of the cache key.
++        location /client/assets/ {
++            proxy_pass https://parsec-server:6777;
++
++            proxy_cache parsec_static;
++            proxy_cache_key $scheme$proxy_host$request_uri$http_accept_encoding;
++
++            # Add X-Forwarded headers to the proxied request
++            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
++            proxy_set_header X-Forwarded-Proto $scheme;
++            proxy_set_header X-Forwarded-Port $server_port;
++
++            # Clear headers that may have been set by a malicious request
++            proxy_set_header Forwarded "";
++            proxy_set_header X-Forwarded-Host "";
++
++            # Forward the original Host header: the Parsec Server relies on it
++            # to distinguish the main domain from the editics ones. Requests
++            # with an unknown Host are rejected by the catch-all server above.
++            proxy_set_header Host $http_host;
 +        }
 +
          location ~ ^/authenticated/.*/events$ {
              proxy_pass https://parsec-server:6777;
- 
+
