@@ -1,18 +1,18 @@
 # Parsec Cloud — Agent Guide
 
-Parsec is a monorepo for a simple, secure, end-to-end encrypted file-sharing cloud app.
-This file orients coding agents; each component has its own `README.md` that should be
-read when working in that component.
+Parsec is a zero-trust, client-side end-to-end encrypted, cloud file-sharing platform. This monorepo contains the core cryptographic & business logic library (`libparsec`), server, desktop/web clients, CLI, language bindings, and documentation.
 
 ## Components
 
-| Path          | What it is                                             | Read first                          |
-| ------------- | ------------------------------------------------------ | ----------------------------------- |
-| `cli/`        | CLI client (Rust, `parsec-cli` cargo package)         | `cli/README.md`                     |
-| `server/`     | Server (Python, packaged with maturin-bound Rust)      | `server/README.md`, `docs/development/README.md` |
-| `client/`     | GUI for web & desktop (Vue 3 + Capacitor + Electron)   | `client/README.md`, `docs/development/README.md` |
-| `libparsec/`  | Core business logic in Rust (`libparsec` + `libparsec_*` crates in `libparsec/crates/`) | `libparsec/README.md` |
-| `bindings/`   | Generated libparsec bindings (Electron / Web / Android)| `bindings/README.md`                |
+Read the local `README.md` and `AGENTS.md` (when present) before modifying files in a specific component:
+
+- `libparsec/` Core business logic Rust library (cryptography, sync engine, rpc protocol, mountpoint logic)
+- `bindings/` libparsec bindings exposed to clients (electron, web, android)
+- `server/` Backend API & meta-data server (Python, packaged with maturin-bound Rust)
+- `client/` GUI for desktop & web apps (Vue 3, Capacitor, Electron)
+- `cli/` CLI client (Rust, parsec-cli cargo package)
+- `json_schema/` Schemas for `libparsec/crates/protocol/schema/` & libparsec/crates/types/schema/
+- `docs/` Comprehensive documentation (Sphinx, ReadTheDocs)
 
 Cross-cutting docs live in `docs/development/` (workflow, testbed, adding RPC commands,
 adding types with bindings, glossary). Start at `docs/development/README.md`.
