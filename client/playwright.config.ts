@@ -55,6 +55,16 @@ export default defineConfig({
         ...(IN_CI && {
           launchOptions: {
             args: [
+              // The testbed server advertises the editics server instances under
+              // the `editics[012].localhost` hostnames (its default configuration).
+              // This works when the browser runs on the same machine as the server
+              // (e.g. local dev, `*.localhost` resolving to the loopback address),
+              // but not in CI where playwright tests are run within a docker container.
+              // So here we remap the hostnames to testbed server container's DNS name.
+              '--host-resolver-rules=' +
+                'MAP editics0.localhost parsec-testbed-server,' +
+                'MAP editics1.localhost parsec-testbed-server,' +
+                'MAP editics2.localhost parsec-testbed-server',
               '--ignore-certificate-errors',
               '--disable-web-security',
               '--allow-running-insecure-content',
