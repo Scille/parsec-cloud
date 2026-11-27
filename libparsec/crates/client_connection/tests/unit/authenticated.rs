@@ -21,6 +21,22 @@ use libparsec_types::prelude::*;
 #[cfg(not(target_arch = "wasm32"))]
 mod disconnect_proxy;
 
+/// The testbed server is by default reachable from the editics domains through
+/// `editics[012].localhost` on the same port as the regular server domain.
+fn default_editics_server_urls(device: &LocalDevice) -> Vec<String> {
+    (0..3)
+        .map(|i| {
+            ParsecAddr::new(
+                format!("editics{i}.localhost"),
+                Some(device.organization_addr.port()),
+                false,
+            )
+            .to_http_url(None)
+            .to_string()
+        })
+        .collect()
+}
+
 #[parsec_test(testbed = "minimal")]
 async fn rpc_ok_mocked(env: &TestbedEnv) {
     rpc_ok(env, true).await;
@@ -235,6 +251,7 @@ async fn sse_ok_mocked(env: &TestbedEnv) {
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 realm_minimum_archiving_period_before_deletion: Maybe::Absent,
+                editics_server_urls: Maybe::Absent,
             }
         ))
     );
@@ -301,6 +318,7 @@ async fn sse_ok_with_server(env: &TestbedEnv) {
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                editics_server_urls: Maybe::Present(default_editics_server_urls(&alice,)),
             }
         ))
     );
@@ -621,6 +639,10 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
         alice
     };
     let bob = env.local_device("bob@dev1");
+    // Note the editics server URLs are provided by the server, hence the expected
+    // value must be computed from the server address (and not from
+    // `alice_through_disconnect_proxy`, whose address points to the proxy)
+    let expected_editics_server_urls = default_editics_server_urls(&alice);
 
     let cmds_alice = AuthenticatedCmds::new(
         &env.discriminant_dir,
@@ -660,6 +682,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                editics_server_urls: Maybe::Present(expected_editics_server_urls.clone(),),
             }
         ))
     );
@@ -715,6 +738,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                editics_server_urls: Maybe::Present(expected_editics_server_urls.clone(),),
             }
         ))
     );
@@ -758,6 +782,7 @@ async fn sse_last_event_id_with_server(env: &TestbedEnv) {
                 user_profile_outsider_allowed: true,
                 sse_keepalive_seconds: Some(30.try_into().unwrap()),
                 realm_minimum_archiving_period_before_deletion: Maybe::Present(2592000),
+                editics_server_urls: Maybe::Present(expected_editics_server_urls.clone(),),
             }
         ))
     );
