@@ -315,8 +315,9 @@ class BaseTOTPComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.totp_setup_get_secret.Req,
     ) -> authenticated_cmds.latest.totp_setup_get_secret.Rep:
+        now = DateTime.now()
         outcome = await self.setup_get_secret(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )
@@ -342,8 +343,9 @@ class BaseTOTPComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.totp_setup_confirm.Req,
     ) -> authenticated_cmds.latest.totp_setup_confirm.Rep:
+        now = DateTime.now()
         outcome = await self.setup_confirm(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             one_time_password=req.one_time_password,
@@ -370,8 +372,9 @@ class BaseTOTPComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.totp_create_opaque_key.Req,
     ) -> authenticated_cmds.latest.totp_create_opaque_key.Rep:
+        now = DateTime.now()
         outcome = await self.create_opaque_key(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
         )
@@ -398,8 +401,9 @@ class BaseTOTPComponent:
         client_ctx: AnonymousClientContext,
         req: anonymous_cmds.latest.totp_setup_get_secret.Req,
     ) -> anonymous_cmds.latest.totp_setup_get_secret.Rep:
+        now = DateTime.now()
         outcome = await self.setup_get_secret_with_token(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             user_id=req.user_id,
             token=req.token,
@@ -426,8 +430,9 @@ class BaseTOTPComponent:
         client_ctx: AnonymousClientContext,
         req: anonymous_cmds.latest.totp_setup_confirm.Req,
     ) -> anonymous_cmds.latest.totp_setup_confirm.Rep:
+        now = DateTime.now()
         outcome = await self.setup_confirm_with_token(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             user_id=req.user_id,
             token=req.token,
@@ -457,8 +462,9 @@ class BaseTOTPComponent:
         client_ctx: AnonymousClientContext,
         req: anonymous_cmds.latest.totp_fetch_opaque_key.Req,
     ) -> anonymous_cmds.latest.totp_fetch_opaque_key.Rep:
+        now = DateTime.now()
         outcome = await self.fetch_opaque_key(
-            now=DateTime.now(),
+            now=now,
             organization_id=client_ctx.organization_id,
             user_id=req.user_id,
             opaque_key_id=req.opaque_key_id,

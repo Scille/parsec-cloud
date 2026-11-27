@@ -419,8 +419,9 @@ class BaseOrganizationComponent:
     async def api_tos_get(
         self, client_ctx: AuthenticatedClientContext, req: tos_cmds.latest.tos_get.Req
     ) -> tos_cmds.latest.tos_get.Rep:
+        now = DateTime.now()
         outcome = await self.get_tos(
-            now=DateTime.now(),
+            now=now,
             id=client_ctx.organization_id,
         )
         match outcome:

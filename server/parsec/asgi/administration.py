@@ -690,9 +690,10 @@ async def administration_organization_users_freeze(
     See [Freeze Users](https://docs.parsec.cloud/en/latest/hosting/administration/freeze-users.html).
     """
     backend: Backend = request.app.state.backend
+    now = DateTime.now()
 
     outcome = await backend.user.freeze_user(
-        now=DateTime.now(),
+        now=now,
         organization_id=organization_id,
         user_id=body.user_id,
         user_email=body.user_email,
