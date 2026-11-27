@@ -202,3 +202,25 @@ export async function mockEditicsRequest(context: BrowserContext, error?: '404' 
 export async function saveDocument(frame: FrameLocator): Promise<void> {
   await frame.locator('#box-document-title').locator('#slot-btn-dt-save').click();
 }
+
+// Simulates the client reaching the wrong editics server instance: every
+// request on the editics session routes (the same ones as
+// `trackEditicsSessionRequests`) is answered with the `465 BadEditicsServerInstance`
+// refusal the server sends when the document's session belongs to another
+// editics server instance (e.g. the client computed the sharding index from a
+// stale server configuration).
+export async function mockWrongEditicsInstance(context: BrowserContext): Promise<void> {
+  await context.route(
+    (url) => url.pathname.includes('/authenticated/') && url.pathname.includes('/editics/'),
+    async (route) => {
+      // Same body and headers as `_editics_abort(BadEditicsServerInstance)`
+      // in `server/parsec/asgi/editics.py`
+      await route.fulfill({
+        status: 465,
+        contentType: 'application/json',
+        headers: { 'Api-Version': '1.0' },
+        body: JSON.stringify({ detail: { detail: 'Bad editics server instance' } }),
+      });
+    },
+  );
+}
