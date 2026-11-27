@@ -1,1 +1,0 @@
-Added a users *Timeline* feature displaying users-related activity in the organization (invitations, revocations).

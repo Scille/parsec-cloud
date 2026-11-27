@@ -1,1 +1,0 @@
-Replaced the default PDF viewer to the browser's native PDF viewer. The previous one (**PDF.js**) is used as a fallback.

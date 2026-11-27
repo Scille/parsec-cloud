@@ -1,1 +1,0 @@
-Added an ``Options`` menu that brings together all the document editor's options.

@@ -1,1 +1,0 @@
-File operation window is now hidden when editing a document.

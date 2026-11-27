@@ -8,6 +8,134 @@ Parsec v3.x
 .. towncrier release notes start
 
 
+Parsec v3.11.1-a.0.dev.20784+093d40b (2026-11-27)
+-------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Added an option to export *Users* or *Workspace* activity in ``.json`` format.
+  (`#13604 <https://github.com/Scille/parsec-cloud/issues/13604>`__)
+
+* Added **Real-time collaborative document editing**. Multiple users can now
+  edit the same document simultaneously and view live updates from collaborators
+  in the built-in document editor.
+  (`#13858 <https://github.com/Scille/parsec-cloud/issues/13858>`__)
+
+* Added a users *Timeline* feature displaying users-related activity in the
+  organization (invitations, revocations).
+  (`#13825 <https://github.com/Scille/parsec-cloud/issues/13825>`__)
+
+* Global file upload status is now displayed in the *Background tasks* window
+  when files are being synchronized with the server.
+  (`#12976 <https://github.com/Scille/parsec-cloud/issues/12976>`__)
+
+* Added a workspace *Timeline* feature displaying workspace activity
+  (added/removed users, role changes, workspace renames, etc).
+  (`#13815 <https://github.com/Scille/parsec-cloud/issues/13815>`__)
+
+* Added a workspace details modal, available from the workspace context menu
+  (`#13590 <https://github.com/Scille/parsec-cloud/issues/13590>`__)
+
+* Added *Dark* theme together with a *System* theme option to match the user's
+  system theme.
+  (`#5427 <https://github.com/Scille/parsec-cloud/issues/5427>`__)
+
+* Added an option to convert documents, spreadsheets and presentations to PDF
+  from the document editor.
+  (`#13767 <https://github.com/Scille/parsec-cloud/issues/13767>`__)
+
+* Added a mandatory confirmation when revoking a user to prevent accidental
+  revocations.
+  (`#13686 <https://github.com/Scille/parsec-cloud/issues/13686>`__)
+
+* Added a new way to recover access: *Recovery contacts*. Users can choose 3 or
+  more recovery contacts, giving them the ability to recover access to the
+  organization.
+  (`#13326 <https://github.com/Scille/parsec-cloud/issues/13326>`__)
+
+* Authentication: enhanced handling of multiple SSO options, making it easier to
+  add more in the future.
+  (`#12679 <https://github.com/Scille/parsec-cloud/issues/12679>`__)
+
+* [CLI] Remove `--password-stdin`, the CLI now auto-detect when it should use
+  interactive prompt over reading stdin
+  (`#13666 <https://github.com/Scille/parsec-cloud/issues/13666>`__)
+
+* Replaced the default PDF viewer to the browser's native PDF viewer. The
+  previous one (**PDF.js**) is used as a fallback.
+  (`#13803 <https://github.com/Scille/parsec-cloud/issues/13803>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Improved handling of OpenOffice file formats (``.odt``, ``.odp``, ``.ods``)
+  (`#13682 <https://github.com/Scille/parsec-cloud/issues/13682>`__)
+
+* Fixed a bug that caused an unsaved document to prevent the application from
+  closing. The application's shutdown process has been improved to ensure that
+  users are properly logged out before the application closes.
+  (`#13826 <https://github.com/Scille/parsec-cloud/issues/13826>`__)
+
+* Fixed a bug that caused a message stating that the file was taking too long to
+  open, even after it had already opened.
+  (`#13820 <https://github.com/Scille/parsec-cloud/issues/13820>`__)
+
+* Fixed a bug where the whole document editor screen would become selected when
+  clicking on the save icon.
+  (`#13714 <https://github.com/Scille/parsec-cloud/issues/13714>`__)
+
+* Fixed some outdated URLs pointing to https://parsec.cloud/ pages.
+  (`#13802 <https://github.com/Scille/parsec-cloud/issues/13802>`__)
+
+* Fixed a bug in the *What's new* banner close button making it impossible to
+  click.
+  (`#13804 <https://github.com/Scille/parsec-cloud/issues/13804>`__)
+
+* Workspace users are now always sorted in the same order in List mode.
+  (`#13760 <https://github.com/Scille/parsec-cloud/issues/13760>`__)
+
+
+Deprecations and Removals
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Removed the notification area. This feature ended up not being used, and is
+  removed in favor of alternate means of activity tracking, such as specific
+  notifications systems (ex. the invitations button) or activity monitors (ex.
+  the new Users and Workspace **Timelines**).
+  (`#13718 <https://github.com/Scille/parsec-cloud/issues/13718>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added an ``Options`` menu that brings together all the document editor's
+  options.
+  (`#13824 <https://github.com/Scille/parsec-cloud/issues/13824>`__)
+
+* File operation window is now hidden when editing a document.
+  (`#13774 <https://github.com/Scille/parsec-cloud/issues/13774>`__)
+
+* Redesigned and de-cluttered the home page for a better user experience.
+  (`#13765 <https://github.com/Scille/parsec-cloud/issues/13765>`__)
+
+* Improved document editor loading screen to hide blank background during
+  OnlyOffice loading.
+  (`#13864 <https://github.com/Scille/parsec-cloud/issues/13864>`__)
+
+* Added *Invited by* and *Revoked by* fields in the user details
+  (`#13722 <https://github.com/Scille/parsec-cloud/issues/13722>`__)
+
+* Added a button to learn more about online/offline indicator.
+  (`#13638 <https://github.com/Scille/parsec-cloud/issues/13638>`__)
+
+* Added a ``Copy path`` button when browsing a workspace to easily share the
+  current path.
+  (`#13761 <https://github.com/Scille/parsec-cloud/issues/13761>`__)
+
+
+
 Parsec v3.11.0 (2026-10-28)
 ---------------------------
 

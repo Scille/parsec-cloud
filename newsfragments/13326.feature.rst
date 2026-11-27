@@ -1,1 +1,0 @@
-Added a new way to recover access: *Recovery contacts*. Users can choose 3 or more recovery contacts, giving them the ability to recover access to the organization.
