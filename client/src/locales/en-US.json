@@ -220,7 +220,6 @@
         "organizationList": {
             "subtitle": "Your organizations",
             "welcome": "Welcome back to Parsec",
-            "lastLogin": "Last login",
             "otherActions": "Other actions",
             "linkDescription": "Paste a link you received to {join} or {device}.",
             "linkDescriptionJoin": "join an organization",

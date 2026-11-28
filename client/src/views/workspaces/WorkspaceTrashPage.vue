@@ -164,7 +164,7 @@ async function backToAllWorkspaces(): Promise<void> {
 
 <style lang="scss" scoped>
 .workspace-trash-page {
-  padding: ms.spacing('padding-4xl');
+  padding: ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
   background: ms.color('surface-base-page');
 
   @include ms.responsive-breakpoint('sm') {
@@ -233,6 +233,7 @@ async function backToAllWorkspaces(): Promise<void> {
     display: flex;
     flex-wrap: wrap;
     gap: ms.spacing('gap-3xl');
+    padding: ms.spacing('padding-2xl') ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-none');
   }
 }
 

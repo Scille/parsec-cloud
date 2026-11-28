@@ -59,7 +59,7 @@
           :key="day.toISO() || ''"
           class="activity-group"
         >
-          <ion-text class="user-group__title">
+          <ion-text class="activity-group__title">
             {{ $msTranslate(I18n.formatDate(day, 'short')) }}
           </ion-text>
           <div class="activity-group__events">

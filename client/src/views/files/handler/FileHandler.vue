@@ -809,6 +809,7 @@ async function openActionMenu(event: Event): Promise<void> {
         padding: ms.spacing('padding-xl');
         border-radius: ms.radius('2xl');
         cursor: pointer;
+        -webkit-app-region: no-drag;
 
         &:hover {
           background: ms.color('surface-base-page');
@@ -862,6 +863,11 @@ async function openActionMenu(event: Event): Promise<void> {
           @include ms.font('body-md-medium');
           color: ms.color('text-base-description');
         }
+      }
+
+      .topbar-left-content,
+      &-buttons__item {
+        -webkit-app-region: no-drag;
       }
 
       &-buttons {

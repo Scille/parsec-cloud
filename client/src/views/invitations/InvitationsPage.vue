@@ -841,7 +841,7 @@ async function refreshAll(): Promise<void> {
 
 <style scoped lang="scss">
 .invitations-page {
-  padding: ms.spacing('padding-4xl');
+  padding: ms.spacing('padding-none') ms.spacing('padding-4xl') ms.spacing('padding-4xl') ms.spacing('padding-4xl');
 
   @include ms.responsive-breakpoint('sm') {
     padding: ms.spacing('padding-none');

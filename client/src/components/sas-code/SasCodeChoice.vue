@@ -95,10 +95,9 @@ async function onNoneClicked(): Promise<void> {
   width: 100%;
 }
 
-.button-choice {
+ion-button.button-choice {
   border-radius: ms.radius('lg');
   @include ms.font('heading-h2');
-  font-size: ms.font('heading-h2-text-size') !important;
   letter-spacing: 9px;
   text-transform: uppercase;
   height: 4em;

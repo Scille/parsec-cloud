@@ -6,18 +6,6 @@
       class="log-container"
       v-if="!loading"
     >
-      <textarea
-        v-show="logs.length > 0"
-        class="log-area"
-        readonly
-        :value="logs"
-      />
-      <ms-report-text
-        v-show="logs.length === 0"
-        :theme="MsReportTheme.Info"
-      >
-        {{ $msTranslate('LogDisplayModal.noLog') }}
-      </ms-report-text>
       <div class="logs-buttons">
         <div class="toggle-view-container">
           <div
@@ -71,6 +59,18 @@
           :failure-state="{ text: 'LogDisplayModal.downloadFailed' }"
         />
       </div>
+      <textarea
+        v-show="logs.length > 0"
+        class="log-area"
+        readonly
+        :value="logs"
+      />
+      <ms-report-text
+        v-show="logs.length === 0"
+        :theme="MsReportTheme.Info"
+      >
+        {{ $msTranslate('LogDisplayModal.noLog') }}
+      </ms-report-text>
 
       <a
         ref="downloadLink"
@@ -180,20 +180,17 @@ async function close(): Promise<void> {
   scrollbar-gutter: both-edges;
   display: flex;
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   resize: none;
   background-color: ms.color('surface-base-default-secondary');
   color: ms.color('text-base-body');
   border: none;
-  padding-top: ms.spacing('padding-8xl');
 }
 
 .logs-buttons {
-  width: calc(100% - 1rem);
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: ms.spacing('padding-2xl') ms.spacing('padding-2xl') ms.spacing('padding-2xl');
+  flex-shrink: 0;
+  padding: ms.spacing('padding-2xl');
   display: flex;
   justify-content: flex-end;
   align-items: center;

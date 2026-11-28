@@ -57,8 +57,4 @@ function setToastOffset(width: number): void {
 }
 </script>
 
-<style lang="scss" scoped>
-* {
-  transition: all 100ms ease-in-out;
-}
-</style>
+<style lang="scss" scoped></style>
