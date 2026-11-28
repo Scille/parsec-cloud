@@ -397,32 +397,21 @@ repos:
       - id: check-metaschema
         files: ^json_schema/
 
-      - id: check-jsonschema
-        name: Validate dependabot config with jsonschema
-        alias: check-dependabot
-        files: .github/dependabot.yml
-        args:
-          [
-            --builtin-schema,
-            vendor.dependabot,
-          ]
+      - id: check-dependabot
+      - id: check-github-actions
+      - id: check-github-issue-config
+      - id: check-github-issue-forms
+      - id: check-github-workflows
+      # TODO: Not all workflows has timeout set
+      # - id: check-github-workflows-require-timeout
+
+      - id: check-readthedocs
+
+      - id: check-snapcraft
 
       - id: check-jsonschema
-        name: Validate Read the doc configuration files
-        alias: check-readthedocs
-        files: .readthedocs.yml
-        args:
-          [
-            --builtin-schema,
-            vendor.readthedocs,
-          ]
-
-      - id: check-jsonschema
-        name: Validate snapcraft config
-        alias: check-snapcraft
-        files: ^packaging/snap/snap/snapcraft.yaml
-        args:
-          [
-            --builtin-schema,
-            vendor.snapcraft,
-          ]
+        name: Validate git-cliff configuration
+        alias: check-git-cliff
+        files: .cliff.toml
+        types_or: [toml]
+        args: [--schemafile=https://www.schemastore.org/git-cliff.json]

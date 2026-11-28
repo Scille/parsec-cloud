@@ -504,10 +504,46 @@ def ensure_working_on_the_correct_branch(
 
 
 def get_licence_eol_date(release_date: datetime) -> datetime:
-    # Cannot just add years to date given it wouldn't handle february 29th
+    # Cannot just add years to date given it wouldn't handle February 29th
     license_eol_date = datetime.fromtimestamp(release_date.timestamp() + LICENSE_CONVERSION_DELAY)
     assert release_date.toordinal() < license_eol_date.toordinal()
     return license_eol_date
+
+
+def build_changelog_main(args: argparse.Namespace):
+    current_version = get_version_from_code()
+    release_version = generate_uniq_version(current_version)
+    release_date = datetime.now(tz=UTC)
+    update_changelogs(release_version, release_date)
+
+
+def update_changelogs(new_version: Version, release_date: datetime) -> set[Path]:
+    import glob
+    import json
+
+    out = run_cmd("gh", "release", "view", "--json=tagName", verbose=True)
+    data = json.loads(out)
+    old_latest_tag = data["tagName"]
+
+    changelog_files = set()
+
+    for git_cliff_cfg in glob.glob("**/.cliff.toml", recursive=True):
+        git_cliff_file = Path(git_cliff_cfg)
+        changelog_file = git_cliff_file.parent / "CHANGELOG.md"
+        changelog_file.touch()
+        cmd = (
+            "git-cliff",
+            f"--config={git_cliff_file}",
+            "--body-file=misc/changelog-git-cliff.md.j2",
+            f"--tag={new_version}",
+            f"--prepend={changelog_file}",
+            f"{old_latest_tag}..",
+        )
+        print(f"{COLOR_DIM}>> {' '.join(map(str, cmd))}{COLOR_END}", file=sys.stderr)
+        subprocess.check_call(cmd)
+        changelog_files.add(changelog_file)
+
+    return changelog_files
 
 
 def update_history_changelog(
@@ -820,6 +856,7 @@ def build_main(args: argparse.Namespace) -> None:
     updated_files |= update_version_files(release_version)
     newsfragments = collect_newsfragments()
     updated_files |= update_history_changelog(newsfragments, release_version, yes, release_date)
+    updated_files |= update_changelogs(release_version, release_date)
 
     create_bump_commit_to_new_version(
         new_version=release_version,
@@ -1104,6 +1141,8 @@ def cli(description: str) -> argparse.Namespace:
         action="store_true",
         help="Skip the tag creation",
     )
+
+    new_parser("build-changelog", build_changelog_main, "Only build changelogs", subparsers)
 
     check = new_parser(
         "check",
