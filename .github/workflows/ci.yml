@@ -188,10 +188,12 @@ jobs:
       - name: Patch pre-commit for line-ending
         id: patched-pre-commit-config
         run: |
-          TEMP_FILE=$(mktemp)
+          # We use the patched files as cache key,
+          # But it only work if it's a child of GITHUB_WORKSPACE
+          TEMP_FILE=${{ github.workspace }}/.pre-commit-config.patched.yaml
           sed '/id: mixed-line-ending/a\        args: [ --fix=lf ]' .pre-commit-config.yaml > $TEMP_FILE
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
-          echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
+          echo "path=$TEMP_FILE" | tee $GITHUB_OUTPUT
 
       - uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
         with:
