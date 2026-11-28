@@ -188,7 +188,6 @@ export function getFileIcon(file: string): string {
     case 'psd':
       return File.Photoshop;
     case 'js':
-    case 'ts':
     case 'jsx':
     case 'tsx':
       return File.Javascript;
@@ -265,6 +264,7 @@ export function getFileIcon(file: string): string {
     case 'bpg':
     case 'heif':
     case 'heic':
+    case 'avif':
     case 'int':
     case 'lbm':
     case 'iff':
@@ -292,6 +292,7 @@ export function getFileIcon(file: string): string {
     case 'mpc':
     case 'msv':
     case 'opus':
+    case 'oga':
     case 'ra':
     case 'rm':
     case 'tta':
@@ -315,6 +316,7 @@ export function getFileIcon(file: string): string {
     case 'asf':
     case 'amv':
     case 'm4v':
+    case 'ts':
     case 'mpg':
     case 'mp2':
     case 'mpeg':

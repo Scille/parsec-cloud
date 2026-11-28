@@ -22,12 +22,12 @@ interface DetectedFileType {
 }
 
 const OPENABLE_FILES = {
-  IMAGES: ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif'],
+  IMAGES: ['png', 'webp', 'jpg', 'jpeg', 'svg', 'bmp', 'gif', 'avif'],
   SPREADSHEETS: ['xlsx', 'xls', 'ods'],
   DOCUMENTS: ['docx', 'odt'],
   PDF_DOCUMENTS: ['pdf'],
-  AUDIOS: ['wav', 'mp3', 'ogg'],
-  VIDEOS: ['mp4', 'mpeg', 'webm'],
+  AUDIOS: ['wav', 'mp3', 'ogg', 'flac', 'aac', 'm4a', 'opus', 'oga'],
+  VIDEOS: ['mp4', 'mpeg', 'webm', 'mov', 'mkv'],
   PRESENTATIONS: ['pptx', 'odp'],
   // For generic text/plain
   TEXTS: [
@@ -55,7 +55,6 @@ const OPENABLE_FILES = {
     'cpp',
     'rs',
     'java',
-    'ts',
     'tsx',
     'ini',
     'properties',
@@ -101,12 +100,12 @@ const OPENABLE_FILES = {
 };
 
 const DETECTABLE_FILES = {
-  IMAGES: [...OPENABLE_FILES.IMAGES, 'avif', 'heic', 'heif', 'raw', 'dng', 'cr2', 'nef', 'arw', 'ps', 'xcf', 'ai', 'eps', 'tiff', 'tif'],
+  IMAGES: [...OPENABLE_FILES.IMAGES, 'heic', 'heif', 'raw', 'dng', 'cr2', 'nef', 'arw', 'ps', 'xcf', 'ai', 'eps', 'tiff', 'tif'],
   SPREADSHEETS: [...OPENABLE_FILES.SPREADSHEETS],
   DOCUMENTS: [...OPENABLE_FILES.DOCUMENTS, 'doc'],
   PDF_DOCUMENTS: [...OPENABLE_FILES.PDF_DOCUMENTS],
-  AUDIOS: [...OPENABLE_FILES.AUDIOS, 'flac', 'aac', 'm4a', 'opus', 'oga', 'alac', 'aiff', 'wma', 'amr', 'mid', 'midi'],
-  VIDEOS: ['mp4', 'mpeg', 'webm', ...OPENABLE_FILES.VIDEOS, 'mkv', 'mov', 'avi', 'ts', 'm2ts', 'mts', 'flv', 'wmv', '3gp', 'mpg', 'mpeg'],
+  AUDIOS: [...OPENABLE_FILES.AUDIOS, 'alac', 'aiff', 'wma', 'amr', 'mid', 'midi'],
+  VIDEOS: [...OPENABLE_FILES.VIDEOS, 'avi', 'ts', 'm2ts', 'mts', 'flv', 'wmv', '3gp', 'mpg'],
   PRESENTATIONS: [...OPENABLE_FILES.PRESENTATIONS, 'ppt'],
   TEXTS: [...OPENABLE_FILES.TEXTS],
 };
